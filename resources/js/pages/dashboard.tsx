@@ -3,7 +3,7 @@ import { CapacityCard } from '@/components/dashboard/capacity-card';
 import { EmergenciesCard } from '@/components/dashboard/emergencies-card';
 import { FlowCard } from '@/components/dashboard/flow-card';
 import { SummaryGrid } from '@/components/dashboard/summary-grid';
-import { TeamTriageCard } from '@/components/dashboard/team-triage-card';
+import { Arrivals118Card, type Arrival118 } from '@/components/dashboard/arrivals-118-card';
 import AppLayout from '@/layouts/app-layout';
 import { apiRequest } from '@/lib/api';
 import { dashboard } from '@/routes';
@@ -39,24 +39,30 @@ type ApiInvestigation = {
     description?: string | null;
 };
 
-const teamTriageInitial = [
+const arrivals118Initial: Arrival118[] = [
     {
-        nome: 'Team A',
-        stato: 'Operativo',
-        dettagli: '2 infermieri, 1 medico',
-        accentClassName: 'text-emerald-600 dark:text-emerald-200',
+        id: '118-1',
+        mezzo: 'Auto medica VR12',
+        eta: '8 min',
+        codice: 'Rosso',
+        destinazione: 'Shock room',
+        note: 'Politrauma, intubato',
     },
     {
-        nome: 'Team B',
-        stato: 'In supporto',
-        dettagli: 'attivato su chiamata',
-        accentClassName: 'text-amber-600 dark:text-amber-200',
+        id: '118-2',
+        mezzo: 'Ambulanza CRI 24',
+        eta: '15 min',
+        codice: 'Giallo',
+        destinazione: 'Osservazione breve',
+        note: 'Dolore toracico, monitor',
     },
     {
-        nome: 'Team C',
-        stato: 'Stand-by',
-        dettagli: 'turno dalle 18:00',
-        accentClassName: 'text-blue-600 dark:text-blue-200',
+        id: '118-3',
+        mezzo: 'Ambulanza ANPAS 07',
+        eta: '22 min',
+        codice: 'Verde',
+        destinazione: 'Area verde',
+        note: 'Trauma minore arto sup.',
     },
 ];
 
@@ -68,7 +74,7 @@ const operativeActionsInitial = [
 
 export default function Dashboard() {
     const [operativeActions] = useState(operativeActionsInitial);
-    const [teamTriage] = useState(teamTriageInitial);
+    const [arrivals118] = useState(arrivals118Initial);
     const [emergenzeApi, setEmergenzeApi] = useState<ApiEmergency[]>([]);
     const [investigations, setInvestigations] = useState<ApiInvestigation[]>([]);
     const [loading, setLoading] = useState(true);
@@ -148,7 +154,9 @@ export default function Dashboard() {
     const summaryCards = useMemo(() => {
         const rossi = emergenze.filter((e) => e.codice === 'Rosso').length;
         const gialli = emergenze.filter((e) => e.codice === 'Giallo').length;
-        const inAttesa = emergenze.length;
+        const inDimissione = emergenzeApi.filter((e) =>
+            (e.status ?? '').toLowerCase().includes('dimission'),
+        ).length;
         const postiDisponibili = Math.max(0, 20 - emergenze.length);
 
         return [
@@ -171,13 +179,13 @@ export default function Dashboard() {
                 chip: 'Monitoraggio attivo',
             },
             {
-                label: 'In attesa triage',
-                value: `${inAttesa} arrivi`,
+                label: 'In attesa dimissione',
+                value: `${inDimissione} pazienti`,
                 delta: '',
                 icon: Activity,
                 accentClassName:
                     'bg-blue-500/10 text-blue-600 border-blue-200 dark:border-blue-900/40 dark:text-blue-200',
-                chip: 'Team triage attivo',
+                chip: 'Dimissioni da completare',
             },
             {
                 label: 'Posti disponibili',
@@ -239,7 +247,7 @@ export default function Dashboard() {
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <CapacityCard areas={statoCorsie} />
                     <FlowCard items={flowItems} />
-                    <TeamTriageCard teams={teamTriage} />
+                    <Arrivals118Card items={arrivals118} />
                 </div>
 
             </div>

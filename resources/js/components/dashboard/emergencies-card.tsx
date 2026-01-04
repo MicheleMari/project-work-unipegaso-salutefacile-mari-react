@@ -49,6 +49,25 @@ const codiceBadgeClasses: Record<EmergencyItem['codice'], string> = {
         'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/50 dark:text-emerald-200',
 };
 
+const codiceFilterClasses: Record<EmergencyItem['codice'], string> = {
+    Rosso:
+        'border-red-200 bg-red-500/10 text-red-700 dark:border-red-900/60 dark:text-red-200 hover:bg-red-500/15',
+    Giallo:
+        'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/60 dark:text-amber-200 hover:bg-amber-500/15',
+    Verde:
+        'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-200 hover:bg-emerald-500/15',
+};
+
+const statusFilterClasses: Record<string, string> = {
+    'In triage': 'border-blue-200 bg-blue-500/10 text-blue-700 dark:border-blue-900/60 dark:text-blue-200',
+    'In valutazione':
+        'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/60 dark:text-amber-200',
+    'Dimesso':
+        'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-200',
+    'In trattamento':
+        'border-purple-200 bg-purple-500/10 text-purple-700 dark:border-purple-900/60 dark:text-purple-200',
+};
+
 export function EmergenciesCard({ items, investigations }: EmergenciesCardProps) {
     const [flowOpen, setFlowOpen] = useState(false);
     const [selected, setSelected] = useState<EmergencyItem | null>(null);
@@ -57,6 +76,8 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
     const [patientDialogOpen, setPatientDialogOpen] = useState(false);
     const [patientDialogId, setPatientDialogId] = useState<number | string | undefined>();
     const [patientDialogName, setPatientDialogName] = useState('');
+    const [codeFilter, setCodeFilter] = useState<'all' | EmergencyItem['codice']>('all');
+    const [statusFilter, setStatusFilter] = useState<'all' | string>('all');
 
     const filteredExams = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -79,6 +100,25 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
             return next;
         });
     };
+
+    const codiceOptions = useMemo(
+        () => Array.from(new Set(items.map((item) => item.codice))) as EmergencyItem['codice'][],
+        [items],
+    );
+    const statusOptions = useMemo(
+        () => Array.from(new Set(items.map((item) => formatStatus(item.stato)))).filter(Boolean),
+        [items],
+    );
+
+    const filteredItems = useMemo(
+        () =>
+            items.filter(
+                (item) =>
+                    (codeFilter === 'all' || item.codice === codeFilter) &&
+                    (statusFilter === 'all' || formatStatus(item.stato) === statusFilter),
+            ),
+        [items, codeFilter, statusFilter],
+    );
 
     const openPatientDetails = (patientId?: number | string, patientName?: string) => {
         setPatientDialogId(patientId);
@@ -119,7 +159,53 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    {items.map((item) => (
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-xs font-semibold uppercase text-muted-foreground">
+                            Filtra:
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                            <Badge
+                                variant={codeFilter === 'all' ? 'secondary' : 'outline'}
+                                className="cursor-pointer"
+                                onClick={() => setCodeFilter('all')}
+                            >
+                                Tutti i codici
+                            </Badge>
+                            {codiceOptions.map((code) => (
+                                <Badge
+                                    key={code}
+                                    variant={codeFilter === code ? 'secondary' : 'outline'}
+                                    className={`cursor-pointer ${codiceFilterClasses[code]}`}
+                                    onClick={() => setCodeFilter((prev) => (prev === code ? 'all' : code))}
+                                >
+                                    {code}
+                                </Badge>
+                            ))}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                            <Badge
+                                variant={statusFilter === 'all' ? 'secondary' : 'outline'}
+                                className="cursor-pointer"
+                                onClick={() => setStatusFilter('all')}
+                            >
+                                Tutti gli stati
+                            </Badge>
+                            {statusOptions.map((status) => (
+                                <Badge
+                                    key={status}
+                                    variant={statusFilter === status ? 'secondary' : 'outline'}
+                                    className={`cursor-pointer ${statusFilterClasses[status] ?? ''}`}
+                                    onClick={() =>
+                                        setStatusFilter((prev) => (prev === status ? 'all' : status))
+                                    }
+                                >
+                                    {status}
+                                </Badge>
+                            ))}
+                        </div>
+                    </div>
+
+                    {filteredItems.map((item) => (
                         <div
                             key={item.id}
                             className="flex flex-col gap-2 rounded-lg border border-border/70 bg-background/70 p-3 shadow-xs md:flex-row md:items-center md:justify-between"
@@ -147,10 +233,9 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
-                                <span className="font-medium text-foreground">{item.destinazione}</span>
                                 <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
                                     <Stethoscope className="size-3.5" />
-                                    {item.stato}
+                                    {formatStatus(item.stato)}
                                 </span>
                                 <Button
                                     size="sm"
@@ -270,6 +355,12 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
             />
         </>
     );
+}
+
+function formatStatus(status: string) {
+    if (!status) return '';
+    const spaced = status.replace(/_/g, ' ').trim();
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
 export type { EmergencyItem };
