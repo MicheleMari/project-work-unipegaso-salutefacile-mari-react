@@ -197,59 +197,63 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
                         </div>
                     </div>
 
-                    {filteredItems.map((item) => {
-                        const waitTone = getWaitTone(item, now);
-                        return (
-                            <div
-                                key={item.id}
-                                className="flex flex-col gap-2 rounded-lg border border-border/70 bg-background/70 p-3 shadow-xs md:flex-row md:items-center md:justify-between"
-                            >
-                                <div className="flex items-start gap-3">
-                                    <Badge
-                                        variant="outline"
-                                        className={codiceBadgeClasses[item.codice]}
-                                    >
-                                        {item.codice}
-                                    </Badge>
-                                    <div className="space-y-1">
-                                        <button
-                                            type="button"
-                                            className="text-sm font-semibold leading-tight text-left underline-offset-4 hover:underline"
-                                            onClick={() => openPatientDetails(item.patientId, item.paziente)}
+                    {filteredItems.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Nessuna emergenza presente</p>
+                    ) : (
+                        filteredItems.map((item) => {
+                            const waitTone = getWaitTone(item, now);
+                            return (
+                                <div
+                                    key={item.id}
+                                    className="flex flex-col gap-2 rounded-lg border border-border/70 bg-background/70 p-3 shadow-xs md:flex-row md:items-center md:justify-between"
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <Badge
+                                            variant="outline"
+                                            className={codiceBadgeClasses[item.codice]}
                                         >
-                                            {item.paziente}
-                                        </button>
-                                        <p className="text-xs text-muted-foreground">{item.arrivo}</p>
-                                        <div
-                                            className={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-[11px] font-semibold ${waitTone.className}`}
-                                        >
-                                            {waitTone.icon === 'alert' ? (
-                                                <AlertTriangle className="size-3.5" />
-                                            ) : (
-                                                <Ambulance className="size-3.5" />
-                                            )}
-                                            <span>Attesa {formatElapsed(item.createdAt, now)}</span>
+                                            {item.codice}
+                                        </Badge>
+                                        <div className="space-y-1">
+                                            <button
+                                                type="button"
+                                                className="text-sm font-semibold leading-tight text-left underline-offset-4 hover:underline"
+                                                onClick={() => openPatientDetails(item.patientId, item.paziente)}
+                                            >
+                                                {item.paziente}
+                                            </button>
+                                            <p className="text-xs text-muted-foreground">{item.arrivo}</p>
+                                            <div
+                                                className={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-[11px] font-semibold ${waitTone.className}`}
+                                            >
+                                                {waitTone.icon === 'alert' ? (
+                                                    <AlertTriangle className="size-3.5" />
+                                                ) : (
+                                                    <Ambulance className="size-3.5" />
+                                                )}
+                                                <span>Attesa {formatElapsed(item.createdAt, now)}</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
+                                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
+                                            <Stethoscope className="size-3.5" />
+                                            {formatStatus(item.stato)}
+                                        </span>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="mt-1 font-medium"
+                                            onClick={() => handleOpenFlow(item)}
+                                        >
+                                            <Stethoscope className="mr-2 size-4" aria-hidden="true" />
+                                            Richiesta accertamenti preliminari
+                                        </Button>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
-                                    <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
-                                        <Stethoscope className="size-3.5" />
-                                        {formatStatus(item.stato)}
-                                    </span>
-                                    <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="mt-1 font-medium"
-                                        onClick={() => handleOpenFlow(item)}
-                                    >
-                                        <Stethoscope className="mr-2 size-4" aria-hidden="true" />
-                                        Richiesta accertamenti preliminari
-                                    </Button>
-                                </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })
+                    )}
                 </CardContent>
             </Card>
 

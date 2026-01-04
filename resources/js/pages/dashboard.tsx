@@ -99,8 +99,10 @@ export default function Dashboard() {
         let active = true;
         const load = async () => {
             try {
-                const emergencies = await apiRequest<ApiEmergency[]>('/api/emergencies');
-                const investigationsData = await apiRequest<ApiInvestigation[]>('/api/investigations');
+                const [emergencies, investigationsData] = await Promise.all([
+                    apiRequest<ApiEmergency[]>('/api/emergencies?limit=50'),
+                    apiRequest<ApiInvestigation[]>('/api/investigations'),
+                ]);
                 if (active) {
                     setEmergenzeApi(emergencies);
                     setInvestigations(investigationsData);

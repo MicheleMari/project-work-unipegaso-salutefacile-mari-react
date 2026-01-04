@@ -10,7 +10,17 @@ class EmergencyController extends Controller
 {
     public function index()
     {
-        return Emergency::with(['user', 'patient'])->get();
+        $limit = (int) request('limit', 50);
+        $limit = max(1, min($limit, 200)); // evita richieste troppo pesanti
+
+        return Emergency::query()
+            ->select(['id', 'description', 'alert_code', 'patient_id', 'status', 'created_at'])
+            ->with([
+                'patient:id,name,surname',
+            ])
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get();
     }
 
     public function store(Request $request)
