@@ -6,9 +6,22 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Ambulance, Stethoscope } from 'lucide-react';
+import { CheckCircle2, Search, XCircle } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { PatientDetailsDialog } from '@/components/dashboard/patient-details-dialog';
 
 type EmergencyItem = {
+    id: number | string;
+    patientId?: number | string;
     paziente: string;
     codice: 'Rosso' | 'Giallo' | 'Verde';
     arrivo: string;
@@ -17,8 +30,15 @@ type EmergencyItem = {
     stato: string;
 };
 
+type PreliminaryExam = {
+    id: number | string;
+    title: string;
+    description?: string | null;
+};
+
 type EmergenciesCardProps = {
     items: EmergencyItem[];
+    investigations: PreliminaryExam[];
 };
 
 const codiceBadgeClasses: Record<EmergencyItem['codice'], string> = {
@@ -29,64 +49,226 @@ const codiceBadgeClasses: Record<EmergencyItem['codice'], string> = {
         'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/50 dark:text-emerald-200',
 };
 
-export function EmergenciesCard({ items }: EmergenciesCardProps) {
+export function EmergenciesCard({ items, investigations }: EmergenciesCardProps) {
+    const [flowOpen, setFlowOpen] = useState(false);
+    const [selected, setSelected] = useState<EmergencyItem | null>(null);
+    const [search, setSearch] = useState('');
+    const [selectedExams, setSelectedExams] = useState<Set<string>>(new Set());
+    const [patientDialogOpen, setPatientDialogOpen] = useState(false);
+    const [patientDialogId, setPatientDialogId] = useState<number | string | undefined>();
+    const [patientDialogName, setPatientDialogName] = useState('');
+
+    const filteredExams = useMemo(() => {
+        const term = search.trim().toLowerCase();
+        if (!term) return investigations;
+        return investigations.filter(
+            (exam) =>
+                exam.title.toLowerCase().includes(term) ||
+                (exam.description ?? '').toLowerCase().includes(term),
+        );
+    }, [search, investigations]);
+
+    const toggleExam = (id: string) => {
+        setSelectedExams((prev) => {
+            const next = new Set(prev);
+            if (next.has(id)) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    };
+
+    const openPatientDetails = (patientId?: number | string, patientName?: string) => {
+        setPatientDialogId(patientId);
+        setPatientDialogName(patientName ?? '');
+        setPatientDialogOpen(true);
+    };
+
+    const handleOpenFlow = (item: EmergencyItem) => {
+        setSelected(item);
+        setFlowOpen(true);
+        setSearch('');
+        setSelectedExams(new Set());
+    };
+
     return (
-        <Card className="xl:col-span-2">
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Emergenze in corso</CardTitle>
-                    <CardDescription>
-                        Monitoraggio arrivi, codice colore e destinazioni
-                    </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Badge
-                        variant="outline"
-                        className="border-blue-200 bg-blue-500/10 text-blue-700 dark:border-blue-900/50 dark:text-blue-200"
-                    >
-                        Tempo medio triage 07:10
-                    </Badge>
-                    <Badge
-                        variant="outline"
-                        className="border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/50 dark:text-emerald-200"
-                    >
-                        Monitor continuo
-                    </Badge>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-                {items.map((item) => (
-                    <div
-                        key={item.paziente}
-                        className="flex flex-col gap-2 rounded-lg border border-border/70 bg-background/70 p-3 shadow-xs md:flex-row md:items-center md:justify-between"
-                    >
-                        <div className="flex items-start gap-3">
-                            <Badge
-                                variant="outline"
-                                className={codiceBadgeClasses[item.codice]}
-                            >
-                                {item.codice}
-                            </Badge>
-                            <div className="space-y-1">
-                                <p className="text-sm font-semibold leading-tight">{item.paziente}</p>
-                                <p className="text-xs text-muted-foreground">{item.arrivo}</p>
-                                <div className="inline-flex items-center gap-2 rounded-md bg-muted/70 px-2 py-1 text-[11px] text-muted-foreground">
-                                    <Ambulance className="size-3.5" />
-                                    Attesa {item.attesa}
+        <>
+            <Card className="xl:col-span-2">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Emergenze in corso</CardTitle>
+                        <CardDescription>
+                            Monitoraggio arrivi, codice colore e destinazioni
+                        </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Badge
+                            variant="outline"
+                            className="border-blue-200 bg-blue-500/10 text-blue-700 dark:border-blue-900/50 dark:text-blue-200"
+                        >
+                            Tempo medio triage 07:10
+                        </Badge>
+                        <Badge
+                            variant="outline"
+                            className="border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/50 dark:text-emerald-200"
+                        >
+                            Monitor continuo
+                        </Badge>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {items.map((item) => (
+                        <div
+                            key={item.id}
+                            className="flex flex-col gap-2 rounded-lg border border-border/70 bg-background/70 p-3 shadow-xs md:flex-row md:items-center md:justify-between"
+                        >
+                            <div className="flex items-start gap-3">
+                                <Badge
+                                    variant="outline"
+                                    className={codiceBadgeClasses[item.codice]}
+                                >
+                                    {item.codice}
+                                </Badge>
+                                <div className="space-y-1">
+                                    <button
+                                        type="button"
+                                        className="text-sm font-semibold leading-tight text-left underline-offset-4 hover:underline"
+                                        onClick={() => openPatientDetails(item.patientId, item.paziente)}
+                                    >
+                                        {item.paziente}
+                                    </button>
+                                    <p className="text-xs text-muted-foreground">{item.arrivo}</p>
+                                    <div className="inline-flex items-center gap-2 rounded-md bg-muted/70 px-2 py-1 text-[11px] text-muted-foreground">
+                                        <Ambulance className="size-3.5" />
+                                        Attesa {item.attesa}
+                                    </div>
                                 </div>
                             </div>
+                            <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
+                                <span className="font-medium text-foreground">{item.destinazione}</span>
+                                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
+                                    <Stethoscope className="size-3.5" />
+                                    {item.stato}
+                                </span>
+                                <Button
+                                    size="sm"
+                                    variant="secondary"
+                                    className="mt-1"
+                                    onClick={() => handleOpenFlow(item)}
+                                >
+                                    Richiesta accertamenti preliminari
+                                </Button>
+                            </div>
                         </div>
-                        <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
-                            <span className="font-medium text-foreground">{item.destinazione}</span>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
-                                <Stethoscope className="size-3.5" />
-                                {item.stato}
-                            </span>
+                    ))}
+                </CardContent>
+            </Card>
+
+            <Dialog
+                open={flowOpen}
+                onOpenChange={(open) => {
+                    setFlowOpen(open);
+                    if (!open) {
+                        setSelected(null);
+                        setSelectedExams(new Set());
+                        setSearch('');
+                    }
+                }}
+            >
+                <DialogContent className="max-w-5xl">
+                    <DialogHeader>
+                        <DialogTitle>
+                            Richiesta accertamenti preliminari
+                            {selected?.paziente ? ` - ${selected.paziente}` : ''}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p className="text-sm font-medium text-foreground">Seleziona gli esami preliminari</p>
+                                <p className="text-xs text-muted-foreground">
+                                    Puoi selezionare uno o più esami, saranno associati al triage di{' '}
+                                    {selected?.paziente ?? 'paziente'}.
+                                </p>
+                            </div>
+                            <div className="relative sm:w-80">
+                                <Input
+                                    placeholder="Cerca esame..."
+                                    value={search}
+                                    onChange={(event) => setSearch(event.target.value)}
+                                    className="pl-9"
+                                />
+                                <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                            </div>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                            {filteredExams.map((exam) => {
+                                const examId = String(exam.id);
+                                const isSelected = selectedExams.has(examId);
+                                return (
+                                    <button
+                                        key={examId}
+                                        type="button"
+                                        onClick={() => toggleExam(examId)}
+                                        className={`flex h-full flex-col rounded-lg border p-3 text-left transition hover:border-ring hover:shadow-sm ${
+                                            isSelected
+                                                ? 'border-emerald-500/60 bg-emerald-50/60 dark:bg-emerald-900/20'
+                                                : 'bg-background'
+                                        }`}
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div>
+                                                <p className="text-sm font-semibold">{exam.title}</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {exam.description ?? 'Nessuna descrizione'}
+                                                </p>
+                                            </div>
+                                            {isSelected ? (
+                                                <CheckCircle2 className="size-4 text-emerald-600" aria-hidden="true" />
+                                            ) : (
+                                                <XCircle className="size-4 text-muted-foreground/60" aria-hidden="true" />
+                                            )}
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                            {filteredExams.length === 0 ? (
+                                <div className="col-span-full rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                                    Nessun esame trovato
+                                </div>
+                            ) : null}
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{selectedExams.size} esami selezionati</span>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSelectedExams(new Set())}
+                                >
+                                    Svuota selezione
+                                </Button>
+                                <Button type="button" size="sm" onClick={() => setFlowOpen(false)}>
+                                    Conferma selezione
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                ))}
-            </CardContent>
-        </Card>
+                </DialogContent>
+            </Dialog>
+
+            <PatientDetailsDialog
+                open={patientDialogOpen}
+                patientId={patientDialogId}
+                patientName={patientDialogName}
+                onOpenChange={setPatientDialogOpen}
+            />
+        </>
     );
 }
 

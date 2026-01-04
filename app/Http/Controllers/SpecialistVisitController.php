@@ -20,6 +20,13 @@ class SpecialistVisitController extends Controller
             'department_id' => 'required|exists:departments,id',
             'user_id' => 'required|exists:users,id',
             'emergency_id' => 'required|exists:emergencies,id',
+            'status' => 'nullable|string|in:scheduled,in_progress,waiting_report,completed,cancelled',
+            'scheduled_at' => 'nullable|date',
+            'report_expected_at' => 'nullable|date',
+            'report_received_at' => 'nullable|date',
+            'needs_follow_up' => 'nullable|boolean',
+            'disposition' => 'nullable|string|max:60',
+            'notes' => 'nullable|string',
         ]);
 
         return response(SpecialistVisit::create($data)->load(['patient', 'department', 'user', 'emergency']), Response::HTTP_CREATED);
@@ -37,6 +44,13 @@ class SpecialistVisitController extends Controller
             'department_id' => 'required|exists:departments,id',
             'user_id' => 'required|exists:users,id',
             'emergency_id' => 'required|exists:emergencies,id',
+            'status' => 'nullable|string|in:scheduled,in_progress,waiting_report,completed,cancelled',
+            'scheduled_at' => 'nullable|date',
+            'report_expected_at' => 'nullable|date',
+            'report_received_at' => 'nullable|date',
+            'needs_follow_up' => 'nullable|boolean',
+            'disposition' => 'nullable|string|max:60',
+            'notes' => 'nullable|string',
         ]);
 
         $specialistVisit->update($data);

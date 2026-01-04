@@ -18,11 +18,16 @@ class PatientController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:100',
             'surname' => 'required|string|max:100',
-            'fiscal_code' => 'required|string|max:50|unique:patients,fiscal_code',
+            'fiscal_code' => 'required|string|max:50',
             'residence_address' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:150',
         ]);
+
+        $existing = Patient::where('fiscal_code', $data['fiscal_code'])->first();
+        if ($existing) {
+            return response($existing, Response::HTTP_OK);
+        }
 
         return response(Patient::create($data), Response::HTTP_CREATED);
     }

@@ -39,6 +39,11 @@ class Emergency extends Model
         return $this->hasMany(InvestigationPerformed::class);
     }
 
+    public function specialistInvestigationRequests(): HasMany
+    {
+        return $this->hasMany(SpecialistInvestigationRequest::class);
+    }
+
     public function specialistVisits(): HasMany
     {
         return $this->hasMany(SpecialistVisit::class);

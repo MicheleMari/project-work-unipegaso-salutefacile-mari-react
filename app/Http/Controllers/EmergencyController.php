@@ -17,7 +17,7 @@ class EmergencyController extends Controller
     {
         $data = $request->validate([
             'description' => 'nullable|string',
-            'alert_code' => 'nullable|in:bianco,giallo,arancio,rosso',
+            'alert_code' => 'nullable|in:bianco,verde,giallo,arancio,rosso',
             'user_id' => 'required|exists:users,id',
             'patient_id' => 'required|exists:patients,id',
             'vital_signs' => 'nullable|array',
@@ -36,7 +36,7 @@ class EmergencyController extends Controller
     {
         $data = $request->validate([
             'description' => 'nullable|string',
-            'alert_code' => 'nullable|in:bianco,giallo,arancio,rosso',
+            'alert_code' => 'nullable|in:bianco,verde,giallo,arancio,rosso',
             'user_id' => 'required|exists:users,id',
             'patient_id' => 'required|exists:patients,id',
             'vital_signs' => 'nullable|array',

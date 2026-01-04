@@ -1,4 +1,3 @@
-import QuickAccessCard from '@/components/auth/quick-access-card';
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
@@ -7,15 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
-import { useQuickAccessAccount } from '@/hooks/use-quick-access-account';
-import { resolveUrl } from '@/lib/utils';
-import { dashboard } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
-import { Form, Head, router } from '@inertiajs/react';
+import { Form, Head } from '@inertiajs/react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { type SharedData } from '@/types';
+import { useState } from 'react';
 
 interface LoginProps {
     status?: string;
@@ -28,98 +23,7 @@ export default function Login({
 }: LoginProps) {
     const [rememberSelected, setRememberSelected] = useState(false);
     const [identifierInput, setIdentifierInput] = useState('');
-    const [quickLoginPending, setQuickLoginPending] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-
-    const { account, rememberAccount, clearAccount } = useQuickAccessAccount();
-
-    const savedAccount = useMemo(
-        () => (account?.identifier ? account : null),
-        [account],
-    );
-
-    useEffect(() => {
-        if (savedAccount?.identifier) {
-            setIdentifierInput((current) => current || savedAccount.identifier);
-            setRememberSelected(true);
-        }
-    }, [savedAccount]);
-
-    const handleLoginSuccess = useCallback(
-        (page?: { props?: Partial<SharedData> }) => {
-            if (!rememberSelected) {
-                return;
-            }
-
-            const normalizedIdentifier = identifierInput.trim();
-
-            if (!normalizedIdentifier) {
-                return;
-            }
-
-            const user = page?.props?.auth?.user;
-            const avatar =
-                user?.avatar ?? (page?.props?.auth as any)?.user?.avatar ?? null;
-            const fullName = user
-                ? [user.name, user.surname].filter(Boolean).join(' ').trim()
-                : null;
-
-            rememberAccount({
-                identifier: normalizedIdentifier,
-                label: normalizedIdentifier,
-                avatar,
-                displayName: fullName || normalizedIdentifier,
-            });
-        },
-        [identifierInput, rememberAccount, rememberSelected],
-    );
-
-    const handleQuickAccessLogin = useCallback(() => {
-        if (!savedAccount?.identifier) {
-            return;
-        }
-
-        setQuickLoginPending(true);
-        const quickAccessPassword =
-            import.meta.env.VITE_QUICK_ACCESS_PASSWORD?.trim() || 'password';
-
-        router.post(
-            resolveUrl(store()),
-            {
-                email: savedAccount.identifier,
-                password: quickAccessPassword,
-                remember: true,
-            },
-            {
-                onSuccess: (page) => {
-                    const typedPage = page as unknown as { props?: SharedData };
-                    const user = typedPage?.props?.auth?.user ?? null;
-                    const avatar = user?.avatar ?? null;
-                    const fullName = user
-                        ? [user.name, user.surname]
-                              .filter(Boolean)
-                              .join(' ')
-                              .trim()
-                        : null;
-
-                    rememberAccount({
-                        identifier: savedAccount.identifier,
-                        label: savedAccount.label,
-                        lastUsedAt: new Date().toISOString(),
-                        avatar,
-                        displayName: fullName || savedAccount.label,
-                    });
-                },
-                onFinish: () => setQuickLoginPending(false),
-            },
-        );
-    }, [rememberAccount, savedAccount]);
-
-    const handleRemoveQuickAccess = useCallback(() => {
-        clearAccount();
-        setQuickLoginPending(false);
-        setRememberSelected(false);
-    }, [clearAccount]);
 
     return (
         <AuthLayout
@@ -128,28 +32,8 @@ export default function Login({
         >
             <Head title="Accedi" />
 
-            {savedAccount && (
-                <div className="mb-6 space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Accesso rapido
-                    </p>
-                    <QuickAccessCard
-                        identifier={savedAccount.identifier}
-                        label={savedAccount.label}
-                        displayName={savedAccount.displayName}
-                        lastUsedAt={savedAccount.lastUsedAt}
-                        avatar={savedAccount.avatar}
-                        onLogin={handleQuickAccessLogin}
-                        onRemove={handleRemoveQuickAccess}
-                        disabled={quickLoginPending}
-                    />
-                </div>
-            )}
-
             <Form
                 {...store.form()}
-                resetOnSuccess={['password']}
-                onSuccess={handleLoginSuccess}
                 className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (

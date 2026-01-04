@@ -110,6 +110,11 @@ class User extends Authenticatable
         return $this->hasMany(InvestigationPerformed::class, 'performed_by');
     }
 
+    public function specialistInvestigationRequests(): HasMany
+    {
+        return $this->hasMany(SpecialistInvestigationRequest::class, 'requested_by');
+    }
+
     public function specialistVisits(): HasMany
     {
         return $this->hasMany(SpecialistVisit::class);

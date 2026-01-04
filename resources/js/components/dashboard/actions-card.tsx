@@ -14,7 +14,11 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { HeartPulse, Play, ShieldCheck } from 'lucide-react';
 import { BellRing } from 'lucide-react';
-import { useMemo, useState, type FormEvent } from 'react';
+import { useMemo, useState, type FormEvent, type ComponentType } from 'react';
+import { postJson } from '@/lib/api';
+import { usePage } from '@inertiajs/react';
+import type { SharedData } from '@/types';
+import { FiscalCodeTool } from './fiscal-code-tool';
 
 type ActionItem = {
     title: string;
@@ -23,9 +27,22 @@ type ActionItem = {
     badgeTone?: 'solid' | 'muted';
 };
 
+type CreatedEmergency = {
+    id: number;
+    description?: string | null;
+    alert_code?: string | null;
+    status?: string | null;
+    patient: {
+        id: number;
+        name: string;
+        surname: string;
+    };
+};
+
 type ActionsCardProps = {
     primaryCta: string;
     actions: ActionItem[];
+    onEmergencyCreated?: (emergency: CreatedEmergency) => void;
 };
 
 const accentMap: Record<
@@ -72,14 +89,6 @@ const priorityCodes = [
             'border-slate-300 bg-slate-50 shadow-[0_0_0_1px_rgba(15,23,42,0.08)] dark:border-slate-700/70 dark:bg-slate-900/60',
     },
     {
-        value: 'azzurro',
-        label: 'Azzurro',
-        description: 'Condizioni che possono attendere',
-        colorClass: 'bg-sky-500 text-sky-50',
-        selectedClass:
-            'border-sky-200 bg-sky-50 shadow-[0_0_0_1px_rgba(56,189,248,0.25)] dark:border-sky-900/70 dark:bg-sky-950/40',
-    },
-    {
         value: 'verde',
         label: 'Verde',
         description: 'Richiede assistenza, non pericolo immediato',
@@ -88,12 +97,20 @@ const priorityCodes = [
             'border-emerald-200 bg-emerald-50 shadow-[0_0_0_1px_rgba(16,185,129,0.25)] dark:border-emerald-900/70 dark:bg-emerald-950/40',
     },
     {
-        value: 'arancione',
-        label: 'Arancione',
-        description: 'Condizione grave, intervento urgente',
+        value: 'giallo',
+        label: 'Giallo',
+        description: 'Condizione potenzialmente critica, osservazione ravvicinata',
         colorClass: 'bg-amber-500 text-amber-50',
         selectedClass:
             'border-amber-200 bg-amber-50 shadow-[0_0_0_1px_rgba(245,158,11,0.25)] dark:border-amber-900/70 dark:bg-amber-950/40',
+    },
+    {
+        value: 'arancio',
+        label: 'Arancione',
+        description: 'Condizione grave, intervento urgente',
+        colorClass: 'bg-orange-500 text-orange-50',
+        selectedClass:
+            'border-orange-200 bg-orange-50 shadow-[0_0_0_1px_rgba(249,115,22,0.25)] dark:border-orange-900/70 dark:bg-orange-950/40',
     },
     {
         value: 'rosso',
@@ -105,7 +122,9 @@ const priorityCodes = [
     },
 ];
 
-export function ActionsCard({ primaryCta, actions }: ActionsCardProps) {
+export function ActionsCard({ primaryCta, actions, onEmergencyCreated }: ActionsCardProps) {
+    const page = usePage<{ props: SharedData }>();
+    const currentUserId = page?.props?.auth?.user?.id ?? null;
     const [triageOpen, setTriageOpen] = useState(false);
     const [triageForm, setTriageForm] = useState({
         nome: '',
@@ -114,6 +133,9 @@ export function ActionsCard({ primaryCta, actions }: ActionsCardProps) {
         codicePriorita: '',
         motivoAccesso: '',
     });
+    const [triageLoading, setTriageLoading] = useState(false);
+    const [triageError, setTriageError] = useState<string | null>(null);
+    const [triageSuccess, setTriageSuccess] = useState<string | null>(null);
 
     const isFormValid = useMemo(
         () =>
@@ -133,14 +155,62 @@ export function ActionsCard({ primaryCta, actions }: ActionsCardProps) {
             codicePriorita: '',
             motivoAccesso: '',
         });
+        setTriageError(null);
+        setTriageSuccess(null);
     };
 
-    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!isFormValid) return;
-        // TODO: integrare con endpoint di creazione triage
-        resetForm();
-        setTriageOpen(false);
+        if (!currentUserId) {
+            setTriageError('Sessione non valida: riesegui il login.');
+            return;
+        }
+
+        setTriageLoading(true);
+        setTriageError(null);
+        setTriageSuccess(null);
+
+        try {
+            const patient = await postJson<{ id: number }>('/api/patients', {
+                name: triageForm.nome.trim(),
+                surname: triageForm.cognome.trim(),
+                fiscal_code: triageForm.codiceFiscale.trim() || null,
+            });
+
+            const emergency = await postJson<{
+                id: number;
+                status?: string | null;
+                alert_code?: string | null;
+                description?: string | null;
+            }>('/api/emergencies', {
+                user_id: currentUserId,
+                patient_id: patient.id,
+                alert_code: triageForm.codicePriorita,
+                description: triageForm.motivoAccesso.trim(),
+                status: 'in_triage',
+            });
+
+            onEmergencyCreated?.({
+                id: emergency.id,
+                status: emergency.status ?? 'in_triage',
+                alert_code: emergency.alert_code ?? triageForm.codicePriorita,
+                description: emergency.description ?? triageForm.motivoAccesso.trim(),
+                patient: {
+                    id: patient.id,
+                    name: triageForm.nome.trim(),
+                    surname: triageForm.cognome.trim(),
+                },
+            });
+
+            setTriageSuccess('Triage registrato con successo');
+            resetForm();
+            setTriageOpen(false);
+        } catch (err) {
+            setTriageError(err instanceof Error ? err.message : 'Errore durante il salvataggio');
+        } finally {
+            setTriageLoading(false);
+        }
     };
 
     return (
@@ -235,7 +305,26 @@ export function ActionsCard({ primaryCta, actions }: ActionsCardProps) {
                                 />
                             </div>
                             <div className="grid gap-1.5">
-                                <Label htmlFor="triage-cf">Codice fiscale</Label>
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="triage-cf">Codice fiscale</Label>
+                                    <FiscalCodeTool
+                                        defaults={{ nome: triageForm.nome, cognome: triageForm.cognome }}
+                                        onFiscalCodeComputed={(value) =>
+                                            setTriageForm((prev) => ({
+                                                ...prev,
+                                                codiceFiscale: value,
+                                            }))
+                                        }
+                                        trigger={
+                                            <button
+                                                type="button"
+                                                className="text-sm text-muted-foreground underline-offset-2 hover:text-primary hover:underline"
+                                            >
+                                                Non hai il codice fiscale?
+                                            </button>
+                                        }
+                                    />
+                                </div>
                                 <Input
                                     id="triage-cf"
                                     name="codiceFiscale"
@@ -320,12 +409,19 @@ export function ActionsCard({ primaryCta, actions }: ActionsCardProps) {
                         </div>
                     </div>
 
+                    {triageError ? (
+                        <p className="text-sm font-medium text-red-600">{triageError}</p>
+                    ) : null}
+                    {triageSuccess ? (
+                        <p className="text-sm font-medium text-emerald-600">{triageSuccess}</p>
+                    ) : null}
+
                     <DialogFooter className="gap-2">
                         <Button type="button" variant="outline" onClick={() => setTriageOpen(false)}>
                             Annulla
                         </Button>
-                        <Button type="submit" disabled={!isFormValid}>
-                            Conferma triage
+                        <Button type="submit" disabled={!isFormValid || triageLoading}>
+                            {triageLoading ? 'Invio...' : 'Conferma triage'}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -334,5 +430,4 @@ export function ActionsCard({ primaryCta, actions }: ActionsCardProps) {
     );
 }
 
-export type { ActionItem };
-import type { ComponentType } from 'react';
+export type { ActionItem, CreatedEmergency };

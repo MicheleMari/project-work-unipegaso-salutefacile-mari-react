@@ -16,6 +16,20 @@ class SpecialistVisit extends Model
         'department_id',
         'user_id',
         'emergency_id',
+        'status',
+        'scheduled_at',
+        'report_expected_at',
+        'report_received_at',
+        'needs_follow_up',
+        'disposition',
+        'notes',
+    ];
+
+    protected $casts = [
+        'scheduled_at' => 'datetime',
+        'report_expected_at' => 'datetime',
+        'report_received_at' => 'datetime',
+        'needs_follow_up' => 'boolean',
     ];
 
     public function patient(): BelongsTo
@@ -41,5 +55,10 @@ class SpecialistVisit extends Model
     public function attachments(): HasMany
     {
         return $this->hasMany(Attachment::class);
+    }
+
+    public function specialistInvestigationRequests(): HasMany
+    {
+        return $this->hasMany(SpecialistInvestigationRequest::class);
     }
 }
