@@ -30,6 +30,7 @@ type ApiEmergency = {
     description?: string | null;
     alert_code?: string | null;
     status?: string | null;
+    created_at?: string | null;
     patient?: ApiPatient | null;
 };
 
@@ -143,6 +144,7 @@ export default function Dashboard() {
                     attesa: '--:--',
                     destinazione: em.status ?? 'In valutazione',
                     stato: em.status ?? 'In triage',
+                    createdAt: em.created_at ?? undefined,
                 };
             }),
         [emergenzeApi],
