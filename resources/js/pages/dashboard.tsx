@@ -66,11 +66,8 @@ const arrivals118Initial: Arrival118[] = [
     },
 ];
 
-const operativeActionsInitial = [
-    { title: 'Preallerta radiologia', accent: 'amber', badge: 'Prioritario' as const },
-    { title: 'Attiva percorso STEMI', accent: 'blue', badge: 'Cardio in arrivo', badgeTone: 'muted' as const },
-    { title: 'Blocca accessi non urgenti', accent: 'emerald', badge: '20 min' },
-];
+const operativeActionsInitial: { title: string; accent: 'amber' | 'blue' | 'emerald'; badge: string; badgeTone?: 'solid' | 'muted' }[] =
+    [];
 
 export default function Dashboard() {
     const [operativeActions] = useState(operativeActionsInitial);
