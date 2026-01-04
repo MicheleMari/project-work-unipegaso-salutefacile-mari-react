@@ -40,6 +40,16 @@ type ApiInvestigation = {
     description?: string | null;
 };
 
+type ApiInvestigationPerformed = {
+    id: number;
+    emergency_id: number;
+    investigation_id: number;
+    performed_by: number;
+    performed_at?: string | null;
+    outcome?: string | null;
+    notes?: string | null;
+};
+
 const arrivals118Initial: Arrival118[] = [
     {
         id: '118-1',
@@ -75,6 +85,9 @@ export default function Dashboard() {
     const [arrivals118] = useState(arrivals118Initial);
     const [emergenzeApi, setEmergenzeApi] = useState<ApiEmergency[]>([]);
     const [investigations, setInvestigations] = useState<ApiInvestigation[]>([]);
+    const [investigationsPerformed, setInvestigationsPerformed] = useState<
+        Record<number, ApiInvestigationPerformed[]>
+    >({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -99,13 +112,23 @@ export default function Dashboard() {
         let active = true;
         const load = async () => {
             try {
-                const [emergencies, investigationsData] = await Promise.all([
+                const [emergencies, investigationsData, investigationsPerformedData] = await Promise.all([
                     apiRequest<ApiEmergency[]>('/api/emergencies?limit=50'),
                     apiRequest<ApiInvestigation[]>('/api/investigations'),
+                    apiRequest<ApiInvestigationPerformed[]>('/api/investigations-performed'),
                 ]);
                 if (active) {
                     setEmergenzeApi(emergencies);
                     setInvestigations(investigationsData);
+                    const map = investigationsPerformedData.reduce<Record<number, ApiInvestigationPerformed[]>>(
+                        (acc, item) => {
+                            acc[item.emergency_id] = acc[item.emergency_id] || [];
+                            acc[item.emergency_id].push(item);
+                            return acc;
+                        },
+                        {},
+                    );
+                    setInvestigationsPerformed(map);
                 }
             } catch (err) {
                 if (active) {
@@ -147,10 +170,26 @@ export default function Dashboard() {
                     destinazione: em.status ?? 'In valutazione',
                     stato: em.status ?? 'In triage',
                     createdAt: em.created_at ?? undefined,
+                    performedInvestigationIds: (investigationsPerformed[em.id] ?? []).map(
+                        (p) => p.investigation_id,
+                    ),
+                    performedInvestigations: investigationsPerformed[em.id] ?? [],
                 };
             }),
-        [emergenzeApi],
+        [emergenzeApi, investigationsPerformed],
     );
+
+    const handleInvestigationsRecorded = (
+        emergencyId: number,
+        records: ApiInvestigationPerformed[],
+    ) => {
+        setInvestigationsPerformed((prev) => {
+            const existing = prev[emergencyId] ?? [];
+            const merged = new Map<number, ApiInvestigationPerformed>();
+            [...existing, ...records].forEach((item) => merged.set(item.id, item));
+            return { ...prev, [emergencyId]: Array.from(merged.values()) };
+        });
+    };
 
     const summaryCards = useMemo(() => {
         const rossi = emergenze.filter((e) => e.codice === 'Rosso').length;
@@ -237,7 +276,11 @@ export default function Dashboard() {
                 <SummaryGrid items={summaryCards} />
 
                 <div className="grid gap-4 xl:grid-cols-3">
-                    <EmergenciesCard items={emergenze} investigations={investigations} />
+                    <EmergenciesCard
+                        items={emergenze}
+                        investigations={investigations}
+                        onInvestigationsRecorded={handleInvestigationsRecorded}
+                    />
                     <ActionsCard
                         primaryCta="Avvia triage ora"
                         actions={operativeActions}

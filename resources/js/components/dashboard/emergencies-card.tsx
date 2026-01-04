@@ -7,13 +7,21 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Ambulance, Stethoscope } from 'lucide-react';
+import { AlertTriangle, Ambulance, Paperclip, Stethoscope } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PatientDetailsDialog } from '@/components/dashboard/patient-details-dialog';
 import {
     PreliminaryExamsDialog,
     type PreliminaryExam,
 } from '@/components/dashboard/preliminary-exams-dialog';
+import { EmergenciesFilter } from '@/components/dashboard/emergencies-filter';
+import {
+    InvestigationStatusDialog,
+    type InvestigationPerformed,
+} from '@/components/dashboard/investigation-status-dialog';
+import { patchJson, postJson } from '@/lib/api';
+import { usePage } from '@inertiajs/react';
+import type { SharedData } from '@/types';
 
 type EmergencyItem = {
     id: number | string;
@@ -25,11 +33,14 @@ type EmergencyItem = {
     destinazione: string;
     stato: string;
     createdAt?: string;
+    performedInvestigationIds: number[];
+    performedInvestigations: InvestigationPerformed[];
 };
 
 type EmergenciesCardProps = {
     items: EmergencyItem[];
     investigations: PreliminaryExam[];
+    onInvestigationsRecorded?: (emergencyId: number, records: InvestigationPerformed[]) => void;
 };
 
 const codiceBadgeClasses: Record<EmergencyItem['codice'], string> = {
@@ -40,33 +51,9 @@ const codiceBadgeClasses: Record<EmergencyItem['codice'], string> = {
         'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/50 dark:text-emerald-200',
 };
 
-const codiceFilterClasses: Record<EmergencyItem['codice'], string> = {
-    Rosso:
-        'border-red-200 bg-red-500/10 text-red-700 dark:border-red-900/60 dark:text-red-200 hover:bg-red-500/15',
-    Giallo:
-        'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/60 dark:text-amber-200 hover:bg-amber-500/15',
-    Verde:
-        'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-200 hover:bg-emerald-500/15',
-};
-
-const statusFilterClasses: Record<string, string> = {
-    'In triage': 'border-blue-200 bg-blue-500/10 text-blue-700 dark:border-blue-900/60 dark:text-blue-200',
-    'In valutazione':
-        'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/60 dark:text-amber-200',
-    'Dimesso':
-        'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-200',
-    'In trattamento':
-        'border-purple-200 bg-purple-500/10 text-purple-700 dark:border-purple-900/60 dark:text-purple-200',
-};
-
-const waitFilterOptions = [
-    { key: 'all' as const, label: 'Tutti i tempi' },
-    { key: 'green' as const, label: 'Nei tempi', className: 'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-200' },
-    { key: 'yellow' as const, label: 'Soglia gialla', className: 'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/60 dark:text-amber-200' },
-    { key: 'red' as const, label: 'In ritardo', className: 'border-red-200 bg-red-500/10 text-red-700 dark:border-red-900/60 dark:text-red-200' },
-];
-
-export function EmergenciesCard({ items, investigations }: EmergenciesCardProps) {
+export function EmergenciesCard({ items, investigations, onInvestigationsRecorded }: EmergenciesCardProps) {
+    const page = usePage<{ props: SharedData }>();
+    const currentUserId = page?.props?.auth?.user?.id ?? null;
     const [flowOpen, setFlowOpen] = useState(false);
     const [selected, setSelected] = useState<EmergencyItem | null>(null);
     const [patientDialogOpen, setPatientDialogOpen] = useState(false);
@@ -76,18 +63,30 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
     const [statusFilter, setStatusFilter] = useState<'all' | string>('all');
     const [waitFilter, setWaitFilter] = useState<'all' | 'green' | 'yellow' | 'red'>('all');
     const [now, setNow] = useState(() => Date.now());
+    const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+    const [outcomeDrafts, setOutcomeDrafts] = useState<Record<number, string>>({});
 
     useEffect(() => {
         const interval = window.setInterval(() => setNow(Date.now()), 1000);
         return () => window.clearInterval(interval);
     }, []);
 
+    const getDisplayStatus = (item: EmergencyItem) =>
+        item.performedInvestigationIds.length > 0
+            ? 'Accertamenti preliminari in corso'
+            : item.stato;
+
     const codiceOptions = useMemo(
         () => Array.from(new Set(items.map((item) => item.codice))) as EmergencyItem['codice'][],
         [items],
     );
     const statusOptions = useMemo(
-        () => Array.from(new Set(items.map((item) => formatStatus(item.stato)))).filter(Boolean),
+        () =>
+            Array.from(
+                new Set(
+                    items.map((item) => formatStatus(getDisplayStatus(item))),
+                ),
+            ).filter(Boolean),
         [items],
     );
 
@@ -96,7 +95,8 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
             items.filter(
                 (item) =>
                     (codeFilter === 'all' || item.codice === codeFilter) &&
-                    (statusFilter === 'all' || formatStatus(item.stato) === statusFilter) &&
+                    (statusFilter === 'all' ||
+                        formatStatus(getDisplayStatus(item)) === statusFilter) &&
                     (waitFilter === 'all' || getWaitTone(item, now).tone === waitFilter),
             ),
         [items, codeFilter, statusFilter, waitFilter, now],
@@ -111,6 +111,97 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
     const handleOpenFlow = (item: EmergencyItem) => {
         setSelected(item);
         setFlowOpen(true);
+    };
+
+    const handleOpenStatus = (item: EmergencyItem) => {
+        setSelected(item);
+        const drafts = Object.fromEntries(
+            (item.performedInvestigations ?? []).map((perf) => [perf.id, perf.outcome ?? '']),
+        );
+        setOutcomeDrafts(drafts);
+        setStatusDialogOpen(true);
+    };
+
+    const handleConfirmInvestigations = async (examIds: string[]) => {
+        if (!selected?.id) {
+            throw new Error('Emergenza non selezionata');
+        }
+        if (!currentUserId) {
+            throw new Error('Sessione non valida: effettua di nuovo il login');
+        }
+
+        const emergencyId = Number(selected.id);
+        if (Number.isNaN(emergencyId)) {
+            throw new Error('Identificativo emergenza non valido');
+        }
+
+        const alreadyRequested = new Set(
+            (selected.performedInvestigations ?? []).map((inv) => Number(inv.investigation_id)),
+        );
+        const duplicateIds = examIds.filter((id) => alreadyRequested.has(Number(id)));
+        if (duplicateIds.length > 0) {
+            throw new Error('Hai selezionato accertamenti già richiesti');
+        }
+
+        const created = await Promise.all(
+            examIds.map((examId) =>
+                postJson<InvestigationPerformed>('/api/investigations-performed', {
+                    emergency_id: emergencyId,
+                    investigation_id: Number(examId),
+                    performed_by: currentUserId,
+                }),
+            ),
+        );
+
+        setSelected((prev) =>
+            prev
+                ? {
+                      ...prev,
+                      performedInvestigationIds: [
+                          ...prev.performedInvestigationIds,
+                          ...created.map((c) => c.investigation_id),
+                      ],
+                      performedInvestigations: [...prev.performedInvestigations, ...created],
+                  }
+                : prev,
+        );
+        onInvestigationsRecorded?.(emergencyId, created);
+    };
+
+    const handleSaveOutcome = async (performed: InvestigationPerformed) => {
+        if (!currentUserId) {
+            throw new Error('Sessione non valida: effettua di nuovo il login');
+        }
+        const emergencyId = Number(performed.emergency_id);
+        try {
+            const updated = await patchJson<InvestigationPerformed>(
+                `/api/investigations-performed/${performed.id}`,
+                {
+                    emergency_id: emergencyId,
+                    investigation_id: performed.investigation_id,
+                    performed_by: currentUserId,
+                    performed_at: performed.performed_at ?? null,
+                    outcome: outcomeDrafts[performed.id] ?? '',
+                    notes: performed.notes ?? null,
+                },
+            );
+
+            setSelected((prev) => {
+                if (!prev) return prev;
+                const list = prev.performedInvestigations.map((item) =>
+                    item.id === performed.id ? updated : item,
+                );
+                return {
+                    ...prev,
+                    performedInvestigations: list,
+                };
+            });
+            if (emergencyId && onInvestigationsRecorded) {
+                onInvestigationsRecorded(emergencyId, [updated]);
+            }
+        } catch (err) {
+            throw err;
+        }
     };
 
     return (
@@ -139,63 +230,16 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
                     </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-semibold uppercase text-muted-foreground">
-                            Filtra:
-                        </span>
-                        <div className="flex flex-wrap gap-1">
-                            <Badge
-                                variant={codeFilter === 'all' ? 'secondary' : 'outline'}
-                                className="cursor-pointer"
-                                onClick={() => setCodeFilter('all')}
-                            >
-                                Tutti i codici
-                            </Badge>
-                            {codiceOptions.map((code) => (
-                                <Badge
-                                    key={code}
-                                    variant={codeFilter === code ? 'secondary' : 'outline'}
-                                    className={`cursor-pointer ${codiceFilterClasses[code]}`}
-                                    onClick={() => setCodeFilter((prev) => (prev === code ? 'all' : code))}
-                                >
-                                    {code}
-                                </Badge>
-                            ))}
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                            <Badge
-                                variant={statusFilter === 'all' ? 'secondary' : 'outline'}
-                                className="cursor-pointer"
-                                onClick={() => setStatusFilter('all')}
-                            >
-                                Tutti gli stati
-                            </Badge>
-                            {statusOptions.map((status) => (
-                                <Badge
-                                    key={status}
-                                    variant={statusFilter === status ? 'secondary' : 'outline'}
-                                    className={`cursor-pointer ${statusFilterClasses[status] ?? ''}`}
-                                    onClick={() =>
-                                        setStatusFilter((prev) => (prev === status ? 'all' : status))
-                                    }
-                                >
-                                    {status}
-                                </Badge>
-                            ))}
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                            {waitFilterOptions.map((opt) => (
-                                <Badge
-                                    key={opt.key}
-                                    variant={waitFilter === opt.key ? 'secondary' : 'outline'}
-                                    className={`cursor-pointer ${opt.className ?? ''}`}
-                                    onClick={() => setWaitFilter((prev) => (prev === opt.key ? 'all' : opt.key))}
-                                >
-                                    {opt.label}
-                                </Badge>
-                            ))}
-                        </div>
-                    </div>
+                    <EmergenciesFilter
+                        codeFilter={codeFilter}
+                        statusFilter={statusFilter}
+                        waitFilter={waitFilter}
+                        codiceOptions={codiceOptions}
+                        statusOptions={statusOptions}
+                        onCodeChange={setCodeFilter}
+                        onStatusChange={setStatusFilter}
+                        onWaitChange={setWaitFilter}
+                    />
 
                     {filteredItems.length === 0 ? (
                         <p className="text-sm text-muted-foreground">Nessuna emergenza presente</p>
@@ -238,7 +282,7 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
                                     <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
                                         <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
                                             <Stethoscope className="size-3.5" />
-                                            {formatStatus(item.stato)}
+                                            {formatStatus(getDisplayStatus(item))}
                                         </span>
                                         <Button
                                             size="sm"
@@ -249,6 +293,16 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
                                             <Stethoscope className="mr-2 size-4" aria-hidden="true" />
                                             Richiesta accertamenti preliminari
                                         </Button>
+                                        {item.performedInvestigationIds.length > 0 ? (
+                                            <Button
+                                                variant="link"
+                                                size="sm"
+                                                className="px-0 text-emerald-700 hover:text-emerald-600 dark:text-emerald-200"
+                                                onClick={() => handleOpenStatus(item)}
+                                            >
+                                                Visualizza stato accertamenti
+                                            </Button>
+                                        ) : null}
                                     </div>
                                 </div>
                             );
@@ -261,11 +315,30 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
                 open={flowOpen}
                 patientName={selected?.paziente ?? ''}
                 investigations={investigations}
+                onConfirm={handleConfirmInvestigations}
                 onOpenChange={(open) => {
                     setFlowOpen(open);
                     if (!open) {
                         setSelected(null);
                     }
+                }}
+            />
+
+            <InvestigationStatusDialog
+                open={statusDialogOpen}
+                patientName={selected?.paziente ?? ''}
+                investigations={investigations}
+                performed={selected?.performedInvestigations ?? []}
+                outcomeDrafts={outcomeDrafts}
+                onOutcomeChange={(id, value) =>
+                    setOutcomeDrafts((prev) => ({
+                        ...prev,
+                        [id]: value,
+                    }))
+                }
+                onSave={handleSaveOutcome}
+                onOpenChange={(open) => {
+                    setStatusDialogOpen(open);
                 }}
             />
 

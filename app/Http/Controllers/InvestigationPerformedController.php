@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\InvestigationPerformed;
+use App\Models\Emergency;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -25,10 +26,15 @@ class InvestigationPerformedController extends Controller
             'attachment_id' => 'nullable|exists:attachments,id',
         ]);
 
-        return response(
-            InvestigationPerformed::create($data)->load(['emergency', 'investigation', 'performer', 'attachment']),
-            Response::HTTP_CREATED
-        );
+        $record = InvestigationPerformed::create($data)->load(['emergency', 'investigation', 'performer', 'attachment']);
+
+        // Aggiorna lo stato dell'emergenza per riflettere gli accertamenti in corso
+        $emergency = Emergency::find($data['emergency_id']);
+        if ($emergency && $emergency->status !== 'preliminary_exams') {
+            $emergency->update(['status' => 'preliminary_exams']);
+        }
+
+        return response($record, Response::HTTP_CREATED);
     }
 
     public function show(InvestigationPerformed $investigationsPerformed)

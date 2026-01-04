@@ -40,19 +40,29 @@ const parseErrorMessage = async (response: Response): Promise<string> => {
 };
 
 export async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const csrfToken = getCsrfToken();
-    const xsrfCookie = getXsrfCookie();
+    const doFetch = async (): Promise<Response> => {
+        const csrfToken = getCsrfToken();
+        const xsrfCookie = getXsrfCookie();
 
-    const response = await fetch(endpoint, {
-        credentials: 'same-origin',
-        ...options,
-        headers: {
-            ...defaultHeaders,
-            ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
-            ...(xsrfCookie ? { 'X-XSRF-TOKEN': xsrfCookie } : {}),
-            ...(options.headers || {}),
-        },
-    });
+        return fetch(endpoint, {
+            credentials: 'same-origin',
+            ...options,
+            headers: {
+                ...defaultHeaders,
+                ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {}),
+                ...(xsrfCookie ? { 'X-XSRF-TOKEN': xsrfCookie } : {}),
+                ...(options.headers || {}),
+            },
+        });
+    };
+
+    let response = await doFetch();
+
+    // Se la sessione ha perso il token, prova a rigenerarlo e ripeti una volta
+    if (response.status === 419) {
+        await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' }).catch(() => null);
+        response = await doFetch();
+    }
 
     if (!response.ok) {
         throw new Error(await parseErrorMessage(response));

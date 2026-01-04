@@ -19,7 +19,7 @@ type PreliminaryExamsDialogProps = {
     patientName?: string;
     investigations: PreliminaryExam[];
     onOpenChange: (open: boolean) => void;
-    onConfirm?: (selectedIds: string[]) => void;
+    onConfirm?: (selectedIds: string[]) => Promise<void> | void;
 };
 
 export function PreliminaryExamsDialog({
@@ -31,11 +31,16 @@ export function PreliminaryExamsDialog({
 }: PreliminaryExamsDialogProps) {
     const [search, setSearch] = useState('');
     const [selectedExams, setSelectedExams] = useState<Set<string>>(new Set());
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const hasSelection = selectedExams.size > 0;
 
     useEffect(() => {
         if (!open) {
             setSearch('');
             setSelectedExams(new Set());
+            setError(null);
+            setSubmitting(false);
         }
     }, [open]);
 
@@ -61,9 +66,18 @@ export function PreliminaryExamsDialog({
         });
     };
 
-    const handleConfirm = () => {
-        onConfirm?.(Array.from(selectedExams));
-        onOpenChange(false);
+    const handleConfirm = async () => {
+        if (!hasSelection) return;
+        setSubmitting(true);
+        setError(null);
+        try {
+            await onConfirm?.(Array.from(selectedExams));
+            onOpenChange(false);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Errore nel salvataggio');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
@@ -114,19 +128,29 @@ export function PreliminaryExamsDialog({
                         ) : null}
                     </div>
 
+                    {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
+
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <span>{selectedExams.size} esami selezionati</span>
                         <div className="flex gap-2">
+                            {hasSelection ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSelectedExams(new Set())}
+                                    disabled={submitting}
+                                >
+                                    Svuota selezione
+                                </Button>
+                            ) : null}
                             <Button
                                 type="button"
-                                variant="outline"
                                 size="sm"
-                                onClick={() => setSelectedExams(new Set())}
+                                onClick={handleConfirm}
+                                disabled={!hasSelection || submitting}
                             >
-                                Svuota selezione
-                            </Button>
-                            <Button type="button" size="sm" onClick={handleConfirm}>
-                                Conferma selezione
+                                {submitting ? 'Salvataggio...' : 'Conferma selezione'}
                             </Button>
                         </div>
                     </div>
