@@ -6,18 +6,14 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Ambulance, Stethoscope } from 'lucide-react';
-import { CheckCircle2, Search, XCircle } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { PatientDetailsDialog } from '@/components/dashboard/patient-details-dialog';
+import {
+    PreliminaryExamsDialog,
+    type PreliminaryExam,
+} from '@/components/dashboard/preliminary-exams-dialog';
 
 type EmergencyItem = {
     id: number | string;
@@ -28,12 +24,6 @@ type EmergencyItem = {
     attesa: string;
     destinazione: string;
     stato: string;
-};
-
-type PreliminaryExam = {
-    id: number | string;
-    title: string;
-    description?: string | null;
 };
 
 type EmergenciesCardProps = {
@@ -71,35 +61,11 @@ const statusFilterClasses: Record<string, string> = {
 export function EmergenciesCard({ items, investigations }: EmergenciesCardProps) {
     const [flowOpen, setFlowOpen] = useState(false);
     const [selected, setSelected] = useState<EmergencyItem | null>(null);
-    const [search, setSearch] = useState('');
-    const [selectedExams, setSelectedExams] = useState<Set<string>>(new Set());
     const [patientDialogOpen, setPatientDialogOpen] = useState(false);
     const [patientDialogId, setPatientDialogId] = useState<number | string | undefined>();
     const [patientDialogName, setPatientDialogName] = useState('');
     const [codeFilter, setCodeFilter] = useState<'all' | EmergencyItem['codice']>('all');
     const [statusFilter, setStatusFilter] = useState<'all' | string>('all');
-
-    const filteredExams = useMemo(() => {
-        const term = search.trim().toLowerCase();
-        if (!term) return investigations;
-        return investigations.filter(
-            (exam) =>
-                exam.title.toLowerCase().includes(term) ||
-                (exam.description ?? '').toLowerCase().includes(term),
-        );
-    }, [search, investigations]);
-
-    const toggleExam = (id: string) => {
-        setSelectedExams((prev) => {
-            const next = new Set(prev);
-            if (next.has(id)) {
-                next.delete(id);
-            } else {
-                next.add(id);
-            }
-            return next;
-        });
-    };
 
     const codiceOptions = useMemo(
         () => Array.from(new Set(items.map((item) => item.codice))) as EmergencyItem['codice'][],
@@ -129,8 +95,6 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
     const handleOpenFlow = (item: EmergencyItem) => {
         setSelected(item);
         setFlowOpen(true);
-        setSearch('');
-        setSelectedExams(new Set());
     };
 
     return (
@@ -239,10 +203,11 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
                                 </span>
                                 <Button
                                     size="sm"
-                                    variant="secondary"
-                                    className="mt-1"
+                                    variant="outline"
+                                    className="mt-1 font-medium"
                                     onClick={() => handleOpenFlow(item)}
                                 >
+                                    <Stethoscope className="mr-2 size-4" aria-hidden="true" />
                                     Richiesta accertamenti preliminari
                                 </Button>
                             </div>
@@ -251,101 +216,17 @@ export function EmergenciesCard({ items, investigations }: EmergenciesCardProps)
                 </CardContent>
             </Card>
 
-            <Dialog
+            <PreliminaryExamsDialog
                 open={flowOpen}
+                patientName={selected?.paziente ?? ''}
+                investigations={investigations}
                 onOpenChange={(open) => {
                     setFlowOpen(open);
                     if (!open) {
                         setSelected(null);
-                        setSelectedExams(new Set());
-                        setSearch('');
                     }
                 }}
-            >
-                <DialogContent className="max-w-5xl">
-                    <DialogHeader>
-                        <DialogTitle>
-                            Richiesta accertamenti preliminari
-                            {selected?.paziente ? ` - ${selected.paziente}` : ''}
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-foreground">Seleziona gli esami preliminari</p>
-                                <p className="text-xs text-muted-foreground">
-                                    Puoi selezionare uno o più esami, saranno associati al triage di{' '}
-                                    {selected?.paziente ?? 'paziente'}.
-                                </p>
-                            </div>
-                            <div className="relative sm:w-80">
-                                <Input
-                                    placeholder="Cerca esame..."
-                                    value={search}
-                                    onChange={(event) => setSearch(event.target.value)}
-                                    className="pl-9"
-                                />
-                                <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                            </div>
-                        </div>
-
-                        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                            {filteredExams.map((exam) => {
-                                const examId = String(exam.id);
-                                const isSelected = selectedExams.has(examId);
-                                return (
-                                    <button
-                                        key={examId}
-                                        type="button"
-                                        onClick={() => toggleExam(examId)}
-                                        className={`flex h-full flex-col rounded-lg border p-3 text-left transition hover:border-ring hover:shadow-sm ${
-                                            isSelected
-                                                ? 'border-emerald-500/60 bg-emerald-50/60 dark:bg-emerald-900/20'
-                                                : 'bg-background'
-                                        }`}
-                                    >
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div>
-                                                <p className="text-sm font-semibold">{exam.title}</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {exam.description ?? 'Nessuna descrizione'}
-                                                </p>
-                                            </div>
-                                            {isSelected ? (
-                                                <CheckCircle2 className="size-4 text-emerald-600" aria-hidden="true" />
-                                            ) : (
-                                                <XCircle className="size-4 text-muted-foreground/60" aria-hidden="true" />
-                                            )}
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                            {filteredExams.length === 0 ? (
-                                <div className="col-span-full rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                                    Nessun esame trovato
-                                </div>
-                            ) : null}
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>{selectedExams.size} esami selezionati</span>
-                            <div className="flex gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setSelectedExams(new Set())}
-                                >
-                                    Svuota selezione
-                                </Button>
-                                <Button type="button" size="sm" onClick={() => setFlowOpen(false)}>
-                                    Conferma selezione
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </DialogContent>
-            </Dialog>
+            />
 
             <PatientDetailsDialog
                 open={patientDialogOpen}
@@ -363,4 +244,4 @@ function formatStatus(status: string) {
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-export type { EmergencyItem };
+export type { EmergencyItem, PreliminaryExam };
