@@ -1,9 +1,9 @@
 import { ActionsCard, type CreatedEmergency } from '@/components/dashboard/actions-card';
-import { CapacityCard } from '@/components/dashboard/capacity-card';
 import { EmergenciesCard } from '@/components/dashboard/emergencies-card';
+import { InvestigationProgressCard } from '@/components/dashboard/investigation-progress-card';
 import { FlowCard } from '@/components/dashboard/flow-card';
 import { SummaryGrid } from '@/components/dashboard/summary-grid';
-import { Arrivals118Card, type Arrival118 } from '@/components/dashboard/arrivals-118-card';
+import { type Arrival118 } from '@/components/dashboard/arrivals-118-card';
 import AppLayout from '@/layouts/app-layout';
 import { apiRequest } from '@/lib/api';
 import { dashboard } from '@/routes';
@@ -284,14 +284,18 @@ export default function Dashboard() {
                     <ActionsCard
                         primaryCta="Avvia triage ora"
                         actions={operativeActions}
+                        arrivals118={arrivals118}
                         onEmergencyCreated={handleEmergencyCreated}
                     />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    <CapacityCard areas={statoCorsie} />
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
+                    <InvestigationProgressCard
+                        investigations={investigations}
+                        performedMap={investigationsPerformed}
+                        emergencies={emergenzeApi}
+                    />
                     <FlowCard items={flowItems} />
-                    <Arrivals118Card items={arrivals118} />
                 </div>
 
             </div>
