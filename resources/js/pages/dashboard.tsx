@@ -197,7 +197,7 @@ export default function Dashboard() {
         const inDimissione = emergenzeApi.filter((e) =>
             (e.status ?? '').toLowerCase().includes('dimission'),
         ).length;
-        const postiDisponibili = Math.max(0, 20 - emergenze.length);
+        const postiDisponibili = Math.max(0, 10 - emergenze.length);
 
         return [
             {
@@ -228,7 +228,7 @@ export default function Dashboard() {
                 chip: 'Dimissioni da completare',
             },
             {
-                label: 'Posti disponibili',
+                label: 'Posti disponibili (sala O.B.I.)',
                 value: `${postiDisponibili} letti`,
                 delta: '',
                 icon: ShieldCheck,

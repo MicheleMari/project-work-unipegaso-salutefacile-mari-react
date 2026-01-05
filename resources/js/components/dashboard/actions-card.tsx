@@ -132,6 +132,10 @@ export function ActionsCard({ primaryCta, actions, onEmergencyCreated }: Actions
         codiceFiscale: '',
         codicePriorita: '',
         motivoAccesso: '',
+        pressioneArteriosa: '',
+        temperaturaCorporea: '',
+        frequenzaCardiaca: '',
+        saturazione: '',
     });
     const [triageLoading, setTriageLoading] = useState(false);
     const [triageError, setTriageError] = useState<string | null>(null);
@@ -154,6 +158,10 @@ export function ActionsCard({ primaryCta, actions, onEmergencyCreated }: Actions
             codiceFiscale: '',
             codicePriorita: '',
             motivoAccesso: '',
+            pressioneArteriosa: '',
+            temperaturaCorporea: '',
+            frequenzaCardiaca: '',
+            saturazione: '',
         });
         setTriageError(null);
         setTriageSuccess(null);
@@ -172,6 +180,14 @@ export function ActionsCard({ primaryCta, actions, onEmergencyCreated }: Actions
         setTriageSuccess(null);
 
         try {
+            const vitalSigns = {
+                blood_pressure: triageForm.pressioneArteriosa.trim() || undefined,
+                body_temperature: triageForm.temperaturaCorporea.trim() || undefined,
+                heart_rate: triageForm.frequenzaCardiaca.trim() || undefined,
+                oxygen_saturation: triageForm.saturazione.trim() || undefined,
+            };
+            const hasVitalSigns = Object.values(vitalSigns).some(Boolean);
+
             const patient = await postJson<{ id: number }>('/api/patients', {
                 name: triageForm.nome.trim(),
                 surname: triageForm.cognome.trim(),
@@ -189,6 +205,7 @@ export function ActionsCard({ primaryCta, actions, onEmergencyCreated }: Actions
                 alert_code: triageForm.codicePriorita,
                 description: triageForm.motivoAccesso.trim(),
                 status: 'in_triage',
+                vital_signs: hasVitalSigns ? vitalSigns : null,
             });
 
             onEmergencyCreated?.({
@@ -261,22 +278,23 @@ export function ActionsCard({ primaryCta, actions, onEmergencyCreated }: Actions
                 </CardContent>
             </Card>
 
-            <DialogContent className="sm:max-w-4xl">
-                <form className="space-y-6" onSubmit={handleSubmit}>
-                    <DialogHeader>
-                        <DialogTitle>Avvia nuovo triage</DialogTitle>
-                        <DialogDescription>
-                            Inserisci i dati essenziali per aprire la scheda di triage.
-                        </DialogDescription>
-                    </DialogHeader>
+            <DialogContent className="max-h-[calc(100vh-4rem)] overflow-hidden p-0 sm:max-w-4xl">
+                <div className="max-h-[calc(100vh-4rem)] overflow-y-auto p-6 sm:p-8">
+                    <form className="space-y-4" onSubmit={handleSubmit}>
+                        <DialogHeader>
+                            <DialogTitle>Avvia nuovo triage</DialogTitle>
+                            <DialogDescription>
+                                Inserisci i dati essenziali per aprire la scheda di triage.
+                            </DialogDescription>
+                        </DialogHeader>
 
-                    <div className="grid gap-6 md:grid-cols-2">
-                        <div className="grid gap-3">
-                            <div className="grid gap-1.5">
-                                <Label htmlFor="triage-nome">Nome</Label>
-                                <Input
-                                    id="triage-nome"
-                                    name="nome"
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div className="grid gap-2.5">
+                                <div className="grid gap-1.5">
+                                    <Label htmlFor="triage-nome">Nome</Label>
+                                    <Input
+                                        id="triage-nome"
+                                        name="nome"
                                     value={triageForm.nome}
                                     onChange={(event) =>
                                         setTriageForm((prev) => ({
@@ -359,9 +377,9 @@ export function ActionsCard({ primaryCta, actions, onEmergencyCreated }: Actions
                             </div>
                         </div>
 
-                        <div className="grid gap-3">
+                        <div className="grid gap-2.5">
                             <Label>Codice di priorità</Label>
-                            <div className="grid gap-2" role="radiogroup" aria-label="Codice di priorità">
+                            <div className="grid gap-1.5" role="radiogroup" aria-label="Codice di priorità">
                                 {priorityCodes.map((code) => {
                                     const isSelected = triageForm.codicePriorita === code.value;
                                     return (
@@ -409,22 +427,101 @@ export function ActionsCard({ primaryCta, actions, onEmergencyCreated }: Actions
                         </div>
                     </div>
 
-                    {triageError ? (
-                        <p className="text-sm font-medium text-red-600">{triageError}</p>
-                    ) : null}
-                    {triageSuccess ? (
-                        <p className="text-sm font-medium text-emerald-600">{triageSuccess}</p>
-                    ) : null}
+                    <div className="space-y-2.5 rounded-lg border border-dashed p-3">
+                        <div className="space-y-1">
+                            <p className="text-sm font-semibold">Parametri vitali</p>
+                            <p className="text-xs text-muted-foreground">
+                                Dati obbligatori per una valutazione completa del paziente.
+                            </p>
+                        </div>
+                        <div className="grid gap-2.5 md:grid-cols-2">
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="triage-pressione">Pressione arteriosa (mmHg)</Label>
+                                <Input
+                                    id="triage-pressione"
+                                    name="pressioneArteriosa"
+                                    value={triageForm.pressioneArteriosa}
+                                    onChange={(event) =>
+                                        setTriageForm((prev) => ({
+                                            ...prev,
+                                            pressioneArteriosa: event.target.value,
+                                        }))
+                                    }
+                                    placeholder="es. 120/80"
+                                    inputMode="numeric"
+                                />
+                            </div>
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="triage-temp">Temperatura corporea (°C)</Label>
+                                <Input
+                                    id="triage-temp"
+                                    name="temperaturaCorporea"
+                                    type="number"
+                                    step="0.1"
+                                    value={triageForm.temperaturaCorporea}
+                                    onChange={(event) =>
+                                        setTriageForm((prev) => ({
+                                            ...prev,
+                                            temperaturaCorporea: event.target.value,
+                                        }))
+                                    }
+                                    placeholder="es. 36.8"
+                                />
+                            </div>
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="triage-frequenza">Frequenza cardiaca (bpm)</Label>
+                                <Input
+                                    id="triage-frequenza"
+                                    name="frequenzaCardiaca"
+                                    type="number"
+                                    inputMode="numeric"
+                                    value={triageForm.frequenzaCardiaca}
+                                    onChange={(event) =>
+                                        setTriageForm((prev) => ({
+                                            ...prev,
+                                            frequenzaCardiaca: event.target.value,
+                                        }))
+                                    }
+                                    placeholder="es. 78"
+                                />
+                            </div>
+                            <div className="grid gap-1.5">
+                                <Label htmlFor="triage-saturazione">Saturazione (%)</Label>
+                                <Input
+                                    id="triage-saturazione"
+                                    name="saturazione"
+                                    type="number"
+                                    inputMode="numeric"
+                                    value={triageForm.saturazione}
+                                    onChange={(event) =>
+                                        setTriageForm((prev) => ({
+                                            ...prev,
+                                            saturazione: event.target.value,
+                                        }))
+                                    }
+                                    placeholder="es. 98"
+                                />
+                            </div>
+                        </div>
+                    </div>
 
-                    <DialogFooter className="gap-2">
-                        <Button type="button" variant="outline" onClick={() => setTriageOpen(false)}>
-                            Annulla
-                        </Button>
-                        <Button type="submit" disabled={!isFormValid || triageLoading}>
-                            {triageLoading ? 'Invio...' : 'Conferma triage'}
-                        </Button>
-                    </DialogFooter>
-                </form>
+                        {triageError ? (
+                            <p className="text-sm font-medium text-red-600">{triageError}</p>
+                        ) : null}
+                        {triageSuccess ? (
+                            <p className="text-sm font-medium text-emerald-600">{triageSuccess}</p>
+                        ) : null}
+
+                        <DialogFooter className="gap-2">
+                            <Button type="button" variant="outline" onClick={() => setTriageOpen(false)}>
+                                Annulla
+                            </Button>
+                            <Button type="submit" disabled={!isFormValid || triageLoading}>
+                                {triageLoading ? 'Invio...' : 'Conferma triage'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </div>
             </DialogContent>
         </Dialog>
     );
