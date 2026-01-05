@@ -9,6 +9,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\SpecialistInvestigationController;
 use App\Http\Controllers\SpecialistInvestigationRequestController;
 use App\Http\Controllers\SpecialistVisitController;
+use App\Http\Controllers\TriageAnalyzeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,4 +24,5 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::apiResource('specialist-visits', SpecialistVisitController::class);
     Route::apiResource('attachments', AttachmentController::class);
     Route::get('users', [UserController::class, 'index']);
+    Route::post('triage-analyze', TriageAnalyzeController::class);
 });
