@@ -31,7 +31,7 @@ export function ArrivalsPanel({ arrivals, onArrivalHandled }: ArrivalsPanelProps
                 </Badge>
             </div>
             {arrivals.length === 0 ? (
-                <p className="text-xs text-muted-foreground">Nessun arrivo 118 imminente.</p>
+                <p className="text-xs text-muted-foreground">Nessuna Ambulanza in arrivo</p>
             ) : (
                 <div className="space-y-2">
                     {arrivals

@@ -33,6 +33,7 @@ type EmergencyItem = {
     destinazione: string;
     stato: string;
     createdAt?: string;
+    isFrom118?: boolean;
     performedInvestigationIds: number[];
     performedInvestigations: InvestigationPerformed[];
     specialist?: {
@@ -51,6 +52,10 @@ type EmergenciesCardProps = {
     investigations: PreliminaryExam[];
     onInvestigationsRecorded?: (emergencyId: number, records: InvestigationPerformed[]) => void;
     onSpecialistCalled?: (payload: SpecialistCallResult) => void;
+    title?: string;
+    description?: string;
+    showInvestigationActions?: boolean;
+    showSpecialistActions?: boolean;
 };
 
 const codiceBadgeClasses: Record<EmergencyItem['codice'], string> = {
@@ -66,6 +71,10 @@ export function EmergenciesCard({
     investigations,
     onInvestigationsRecorded,
     onSpecialistCalled,
+    title = 'Emergenze in corso',
+    description = 'Monitoraggio arrivi, codice colore e destinazioni',
+    showInvestigationActions = true,
+    showSpecialistActions = true,
 }: EmergenciesCardProps) {
     const page = usePage<{ props: SharedData }>();
     const currentUserId = page?.props?.auth?.user?.id ?? null;
@@ -303,10 +312,8 @@ export function EmergenciesCard({
             <Card className="xl:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                        <CardTitle>Emergenze in corso</CardTitle>
-                        <CardDescription>
-                            Monitoraggio arrivi, codice colore e destinazioni
-                        </CardDescription>
+                        <CardTitle>{title}</CardTitle>
+                        <CardDescription>{description}</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                         <Badge
@@ -355,9 +362,12 @@ export function EmergenciesCard({
                                         <div className="space-y-1">
                                             <button
                                                 type="button"
-                                                className="text-sm font-semibold leading-tight text-left underline-offset-4 hover:underline"
+                                                className="flex items-center gap-2 text-sm font-semibold leading-tight text-left underline-offset-4 hover:underline"
                                                 onClick={() => openPatientDetails(item.patientId, item.paziente)}
                                             >
+                                                {item.isFrom118 ? (
+                                                    <Ambulance className="size-4 text-blue-600 dark:text-blue-200" />
+                                                ) : null}
                                                 {item.paziente}
                                             </button>
                                             <p className="text-xs text-muted-foreground">{item.arrivo}</p>
@@ -378,16 +388,18 @@ export function EmergenciesCard({
                                             <Stethoscope className="size-3.5" />
                                             {formatStatus(getDisplayStatus(item))}
                                         </span>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="mt-1 font-medium"
-                                            onClick={() => handleOpenFlow(item)}
-                                        >
-                                            <Stethoscope className="mr-2 size-4" aria-hidden="true" />
-                                            Richiesta accertamenti preliminari
-                                        </Button>
-                                        {item.performedInvestigationIds.length > 0 ? (
+                                        {showInvestigationActions ? (
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="mt-1 font-medium"
+                                                onClick={() => handleOpenFlow(item)}
+                                            >
+                                                <Stethoscope className="mr-2 size-4" aria-hidden="true" />
+                                                Richiesta accertamenti preliminari
+                                            </Button>
+                                        ) : null}
+                                        {showInvestigationActions && item.performedInvestigationIds.length > 0 ? (
                                             <Button
                                                 variant="link"
                                                 size="sm"
@@ -397,7 +409,7 @@ export function EmergenciesCard({
                                                 Visualizza stato accertamenti
                                             </Button>
                                         ) : null}
-                                        {item.specialist ? (
+                                        {showSpecialistActions && item.specialist ? (
                                             <Button
                                                 variant="link"
                                                 size="sm"
@@ -415,39 +427,43 @@ export function EmergenciesCard({
                 </CardContent>
             </Card>
 
-            <PreliminaryExamsDialog
-                open={flowOpen}
-                patientName={selected?.paziente ?? ''}
-                investigations={investigations}
-                onConfirm={handleConfirmInvestigations}
-                onOpenChange={(open) => {
-                    setFlowOpen(open);
-                    if (!open) {
-                        setSelected(null);
-                    }
-                }}
-            />
+            {showInvestigationActions ? (
+                <>
+                    <PreliminaryExamsDialog
+                        open={flowOpen}
+                        patientName={selected?.paziente ?? ''}
+                        investigations={investigations}
+                        onConfirm={handleConfirmInvestigations}
+                        onOpenChange={(open) => {
+                            setFlowOpen(open);
+                            if (!open) {
+                                setSelected(null);
+                            }
+                        }}
+                    />
 
-            <InvestigationStatusDialog
-                open={statusDialogOpen}
-                emergencyId={selected?.id}
-                patientName={selected?.paziente ?? ''}
-                investigations={investigations}
-                performed={selected?.performedInvestigations ?? []}
-                outcomeDrafts={outcomeDrafts}
-                onOutcomeChange={(id, value) =>
-                    setOutcomeDrafts((prev) => ({
-                        ...prev,
-                        [id]: value,
-                    }))
-                }
-                onSave={handleSaveOutcome}
-                onSpecialistCalled={handleSpecialistCalled}
-                onAdvancedInvestigationsSelect={handleAdvancedInvestigationsRequest}
-                onOpenChange={(open) => {
-                    setStatusDialogOpen(open);
-                }}
-            />
+                    <InvestigationStatusDialog
+                        open={statusDialogOpen}
+                        emergencyId={selected?.id}
+                        patientName={selected?.paziente ?? ''}
+                        investigations={investigations}
+                        performed={selected?.performedInvestigations ?? []}
+                        outcomeDrafts={outcomeDrafts}
+                        onOutcomeChange={(id, value) =>
+                            setOutcomeDrafts((prev) => ({
+                                ...prev,
+                                [id]: value,
+                            }))
+                        }
+                        onSave={handleSaveOutcome}
+                        onSpecialistCalled={handleSpecialistCalled}
+                        onAdvancedInvestigationsSelect={handleAdvancedInvestigationsRequest}
+                        onOpenChange={(open) => {
+                            setStatusDialogOpen(open);
+                        }}
+                    />
+                </>
+            ) : null}
 
             <PatientDetailsDialog
                 open={patientDialogOpen}
@@ -455,11 +471,13 @@ export function EmergenciesCard({
                 patientName={patientDialogName}
                 onOpenChange={setPatientDialogOpen}
             />
-            <SpecialistDetailsDialog
-                open={calledSpecialistDialogOpen}
-                onOpenChange={setCalledSpecialistDialogOpen}
-                specialistData={calledSpecialist}
-            />
+            {showSpecialistActions ? (
+                <SpecialistDetailsDialog
+                    open={calledSpecialistDialogOpen}
+                    onOpenChange={setCalledSpecialistDialogOpen}
+                    specialistData={calledSpecialist}
+                />
+            ) : null}
         </>
     );
 }

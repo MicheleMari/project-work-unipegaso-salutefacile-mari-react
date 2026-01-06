@@ -28,8 +28,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('specialist_investigations', function (Blueprint $table) {
-            $table->dropIndex('idx_specialist_investigations_department');
             $table->dropForeign(['department_id']);
+            $table->dropIndex('idx_specialist_investigations_department');
             $table->dropColumn('department_id');
         });
     }

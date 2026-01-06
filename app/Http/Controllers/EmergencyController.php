@@ -16,6 +16,10 @@ class EmergencyController extends Controller
     {
         $limit = (int) request('limit', 50);
         $limit = max(1, min($limit, 200)); // evita richieste troppo pesanti
+        $user = request()->user();
+        if ($user) {
+            $user->loadMissing('permission');
+        }
 
         return Emergency::query()
             ->select([
@@ -26,14 +30,23 @@ class EmergencyController extends Controller
                 'user_id',
                 'specialist_id',
                 'status',
+                'notify_ps',
+                'arrived_ps',
+                'arrived_ps_at',
                 'specialist_called_at',
                 'created_at',
             ])
             ->with([
+                'user:id,name,surname,permission_id',
+                'user.permission:id,name',
                 'patient:id,name,surname',
                 'specialist:id,name,surname,department_id,avatar_path,is_available',
                 'specialist.department:id,name',
             ])
+            ->when(
+                $user?->permission?->name === 'Operatore 118',
+                fn ($query) => $query->where('user_id', $user->id),
+            )
             ->orderByDesc('created_at')
             ->limit($limit)
             ->get();
@@ -48,7 +61,24 @@ class EmergencyController extends Controller
             'patient_id' => 'required|exists:patients,id',
             'vital_signs' => 'nullable|array',
             'status' => 'nullable|string|max:50',
+            'notify_ps' => 'nullable|boolean',
+            'arrived_ps' => 'nullable|boolean',
+            'arrived_ps_at' => 'nullable|date',
         ]);
+
+        $user = $request->user();
+        if ($user) {
+            $user->loadMissing('permission');
+        }
+        if ($user?->permission?->name === 'Operatore 118') {
+            $data['user_id'] = $user->id;
+            $data['arrived_ps'] = $data['arrived_ps'] ?? false;
+        }
+        if ($user?->permission?->name === 'Operatore PS') {
+            $data['notify_ps'] = false;
+            $data['arrived_ps'] = true;
+            $data['arrived_ps_at'] = now();
+        }
 
         return response(Emergency::create($data), Response::HTTP_CREATED);
     }
@@ -67,7 +97,14 @@ class EmergencyController extends Controller
             'patient_id' => 'required|exists:patients,id',
             'vital_signs' => 'nullable|array',
             'status' => 'nullable|string|max:50',
+            'notify_ps' => 'nullable|boolean',
+            'arrived_ps' => 'nullable|boolean',
+            'arrived_ps_at' => 'nullable|date',
         ]);
+
+        if (array_key_exists('arrived_ps', $data) && $data['arrived_ps'] && ! $emergency->arrived_ps_at) {
+            $data['arrived_ps_at'] = now();
+        }
 
         $emergency->update($data);
 

@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -16,13 +16,21 @@ import { postJson } from '@/lib/api';
 import { FiscalCodeTool } from '../fiscal-code-tool';
 import type { CreatedEmergency, PriorityCode } from './types';
 import { priorityOrder } from './types';
-import { buildVitalSignsPayload, suggestPriorityFromForm } from './triage-suggestion';
+import {
+    buildVitalSignsPayload,
+    suggestDispositionFromPriority,
+    suggestPriorityFromForm,
+} from './triage-suggestion';
+import { Switch } from '@/components/ui/switch';
 
 type TriageDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     currentUserId: number | null;
     onEmergencyCreated?: (emergency: CreatedEmergency) => void;
+    enableDisposition?: boolean;
+    defaultNotifyPs?: boolean;
+    defaultArrivedPs?: boolean;
 };
 
 const priorityCodes: { value: PriorityCode; label: string; description: string; colorClass: string; selectedClass: string }[] = [
@@ -68,7 +76,15 @@ const priorityCodes: { value: PriorityCode; label: string; description: string; 
     },
 ];
 
-export function TriageDialog({ open, onOpenChange, currentUserId, onEmergencyCreated }: TriageDialogProps) {
+export function TriageDialog({
+    open,
+    onOpenChange,
+    currentUserId,
+    onEmergencyCreated,
+    enableDisposition = false,
+    defaultNotifyPs = false,
+    defaultArrivedPs = false,
+}: TriageDialogProps) {
     const [triageForm, setTriageForm] = useState({
         nome: '',
         cognome: '',
@@ -80,6 +96,9 @@ export function TriageDialog({ open, onOpenChange, currentUserId, onEmergencyCre
         frequenzaCardiaca: '',
         saturazione: '',
     });
+    const [notifyPs, setNotifyPs] = useState(defaultNotifyPs);
+    const [notifyPsTouched, setNotifyPsTouched] = useState(false);
+    const [arrivedPs, setArrivedPs] = useState(defaultArrivedPs);
     const [triageLoading, setTriageLoading] = useState(false);
     const [triageError, setTriageError] = useState<string | null>(null);
     const [triageSuccess, setTriageSuccess] = useState<string | null>(null);
@@ -108,10 +127,23 @@ export function TriageDialog({ open, onOpenChange, currentUserId, onEmergencyCre
             frequenzaCardiaca: '',
             saturazione: '',
         });
+        setNotifyPs(defaultNotifyPs);
+        setNotifyPsTouched(false);
+        setArrivedPs(defaultArrivedPs);
         setTriageError(null);
         setTriageSuccess(null);
         setTriageSuggestion(null);
     };
+
+    const dispositionSuggestion = useMemo(
+        () => (enableDisposition ? suggestDispositionFromPriority(triageForm.codicePriorita) : null),
+        [enableDisposition, triageForm.codicePriorita],
+    );
+
+    useEffect(() => {
+        if (!enableDisposition || notifyPsTouched || !dispositionSuggestion) return;
+        setNotifyPs(dispositionSuggestion.destination === 'ps');
+    }, [dispositionSuggestion, enableDisposition, notifyPsTouched]);
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -135,18 +167,38 @@ export function TriageDialog({ open, onOpenChange, currentUserId, onEmergencyCre
                 fiscal_code: triageForm.codiceFiscale.trim() || null,
             });
 
-            const emergency = await postJson<{
-                id: number;
-                status?: string | null;
-                alert_code?: string | null;
-                description?: string | null;
-            }>('/api/emergencies', {
+            const emergencyPayload: {
+                user_id: number;
+                patient_id: number;
+                alert_code: PriorityCode | '';
+                description: string;
+                status: string;
+                vital_signs: Record<string, string | null> | null;
+                notify_ps?: boolean;
+                arrived_ps?: boolean;
+            } = {
                 user_id: currentUserId,
                 patient_id: patient.id,
                 alert_code: triageForm.codicePriorita,
                 description: triageForm.motivoAccesso.trim(),
                 status: 'in_triage',
                 vital_signs: hasVitalSigns ? vitalSigns : null,
+            };
+
+            if (enableDisposition || defaultNotifyPs !== undefined) {
+                emergencyPayload.notify_ps = notifyPs;
+            }
+            if (enableDisposition || defaultArrivedPs !== undefined) {
+                emergencyPayload.arrived_ps = arrivedPs;
+            }
+
+            const emergency = await postJson<{
+                id: number;
+                status?: string | null;
+                alert_code?: string | null;
+                description?: string | null;
+            }>('/api/emergencies', {
+                ...emergencyPayload,
             });
 
             onEmergencyCreated?.({
@@ -154,6 +206,8 @@ export function TriageDialog({ open, onOpenChange, currentUserId, onEmergencyCre
                 status: emergency.status ?? 'in_triage',
                 alert_code: emergency.alert_code ?? triageForm.codicePriorita,
                 description: emergency.description ?? triageForm.motivoAccesso.trim(),
+                notify_ps: enableDisposition ? notifyPs : null,
+                arrived_ps: enableDisposition || defaultArrivedPs !== undefined ? arrivedPs : null,
                 patient: {
                     id: patient.id,
                     name: triageForm.nome.trim(),
@@ -384,8 +438,38 @@ export function TriageDialog({ open, onOpenChange, currentUserId, onEmergencyCre
                                         );
                                     })}
                                 </div>
+                                {enableDisposition && dispositionSuggestion ? (
+                                    <div className="rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+                                        <span className="font-semibold text-foreground">
+                                            Consiglio operativo:
+                                        </span>{' '}
+                                        {dispositionSuggestion.reason}
+                                    </div>
+                                ) : null}
                             </div>
                         </div>
+
+                        {enableDisposition ? (
+                            <div className="flex flex-col gap-3 rounded-lg border border-dashed p-3">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="space-y-1">
+                                        <Label htmlFor="triage-notify-ps">Avvisa PS del policlinico</Label>
+                                        <p className="text-xs text-muted-foreground">
+                                            Se attivo si sta dirigendo in pronto soccorso, altrimenti si interviene in ambulanza.
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        id="triage-notify-ps"
+                                        checked={notifyPs}
+                                        onCheckedChange={(checked) => {
+                                            setNotifyPsTouched(true);
+                                            setNotifyPs(checked);
+                                        }}
+                                        aria-label="Avvisa PS del policlinico"
+                                    />
+                                </div>
+                            </div>
+                        ) : null}
 
                         <div className="space-y-2.5 rounded-lg border border-dashed p-3">
                             <div className="space-y-1">

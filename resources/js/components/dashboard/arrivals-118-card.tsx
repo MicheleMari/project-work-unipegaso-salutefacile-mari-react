@@ -58,7 +58,7 @@ export function Arrivals118Card({ items }: Arrivals118CardProps) {
                     </div>
                 ))}
                 {!items.length ? (
-                    <p className="text-sm text-muted-foreground">Nessun arrivo 118 imminente.</p>
+                    <p className="text-sm text-muted-foreground">Nessuna Ambulanza in arrivo</p>
                 ) : null}
             </CardContent>
         </Card>
@@ -66,4 +66,3 @@ export function Arrivals118Card({ items }: Arrivals118CardProps) {
 }
 
 export type { Arrival118 };
-

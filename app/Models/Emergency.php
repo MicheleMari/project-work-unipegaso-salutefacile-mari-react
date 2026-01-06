@@ -18,6 +18,9 @@ class Emergency extends Model
         'patient_id',
         'vital_signs',
         'status',
+        'notify_ps',
+        'arrived_ps',
+        'arrived_ps_at',
         'specialist_id',
         'specialist_called_at',
     ];
@@ -25,6 +28,9 @@ class Emergency extends Model
     protected $casts = [
         'vital_signs' => 'array',
         'specialist_called_at' => 'datetime',
+        'notify_ps' => 'boolean',
+        'arrived_ps' => 'boolean',
+        'arrived_ps_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

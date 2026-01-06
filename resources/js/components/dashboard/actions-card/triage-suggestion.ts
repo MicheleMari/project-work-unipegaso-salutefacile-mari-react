@@ -9,6 +9,11 @@ export type TriageFormSnapshot = {
     saturazione: string;
 };
 
+export type DispositionSuggestion = {
+    destination: 'ps' | 'ambulanza';
+    reason: string;
+};
+
 export function suggestPriorityFromForm(form: TriageFormSnapshot) {
     let code: PriorityCode = 'verde';
     const reasons: string[] = [];
@@ -134,6 +139,20 @@ export function buildVitalSignsPayload(form: TriageFormSnapshot) {
         oxygen_saturation: form.saturazione.trim() || null,
     };
     return payload;
+}
+
+export function suggestDispositionFromPriority(code: PriorityCode | ''): DispositionSuggestion | null {
+    if (!code) return null;
+    if (code === 'rosso' || code === 'arancio' || code === 'giallo') {
+        return {
+            destination: 'ps',
+            reason: 'Codice elevato: consigliato trasferimento in pronto soccorso',
+        };
+    }
+    return {
+        destination: 'ambulanza',
+        reason: 'Codice basso: consigliato intervento e monitoraggio in ambulanza',
+    };
 }
 
 function elevate(current: PriorityCode, target: PriorityCode) {

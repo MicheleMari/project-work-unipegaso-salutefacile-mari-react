@@ -16,6 +16,10 @@ type ActionsCardProps = {
     onEmergencyCreated?: (emergency: CreatedEmergency) => void;
     arrivals118?: Arrival118[];
     onArrivalHandled?: (arrivalId: Arrival118['id']) => void;
+    showArrivals?: boolean;
+    enableDisposition?: boolean;
+    defaultNotifyPs?: boolean;
+    defaultArrivedPs?: boolean;
 };
 
 export function ActionsCard({
@@ -24,6 +28,10 @@ export function ActionsCard({
     onEmergencyCreated,
     arrivals118 = [],
     onArrivalHandled,
+    showArrivals = true,
+    enableDisposition = false,
+    defaultNotifyPs,
+    defaultArrivedPs,
 }: ActionsCardProps) {
     const page = usePage<{ props: SharedData }>();
     const currentUserId = page?.props?.auth?.user?.id ?? null;
@@ -38,7 +46,9 @@ export function ActionsCard({
                         <Play className="size-4" aria-hidden="true" />
                         {primaryCta}
                     </Button>
-                    <ArrivalsPanel arrivals={arrivals118} onArrivalHandled={onArrivalHandled} />
+                    {showArrivals ? (
+                        <ArrivalsPanel arrivals={arrivals118} onArrivalHandled={onArrivalHandled} />
+                    ) : null}
                 </CardContent>
             </Card>
 
@@ -47,6 +57,9 @@ export function ActionsCard({
                 onOpenChange={setTriageOpen}
                 currentUserId={currentUserId}
                 onEmergencyCreated={onEmergencyCreated}
+                enableDisposition={enableDisposition}
+                defaultNotifyPs={defaultNotifyPs}
+                defaultArrivedPs={defaultArrivedPs}
             />
         </>
     );

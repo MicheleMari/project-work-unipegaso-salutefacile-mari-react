@@ -10,6 +10,8 @@ export type CreatedEmergency = {
     description?: string | null;
     alert_code?: string | null;
     status?: string | null;
+    notify_ps?: boolean | null;
+    arrived_ps?: boolean | null;
     patient: {
         id: number;
         name: string;
