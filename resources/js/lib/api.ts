@@ -6,6 +6,8 @@ const defaultHeaders = {
     'X-Requested-With': 'XMLHttpRequest',
 };
 
+let csrfInitialized = false;
+
 const getCsrfToken = (): string | undefined => {
     if (typeof document === 'undefined') {
         return undefined;
@@ -26,6 +28,13 @@ const getXsrfCookie = (): string | undefined => {
     return match ? decodeURIComponent(match[1]) : undefined;
 };
 
+const ensureCsrfCookie = async () => {
+    if (csrfInitialized) return;
+    // Try to prime Sanctum cookie once before the first protected call
+    csrfInitialized = true;
+    await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' }).catch(() => null);
+};
+
 const parseErrorMessage = async (response: Response): Promise<string> => {
     try {
         const payload = await response.json();
@@ -41,6 +50,10 @@ const parseErrorMessage = async (response: Response): Promise<string> => {
 
 export async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const doFetch = async (): Promise<Response> => {
+        if (!getXsrfCookie()) {
+            await ensureCsrfCookie();
+        }
+
         const csrfToken = getCsrfToken();
         const xsrfCookie = getXsrfCookie();
 
@@ -60,6 +73,7 @@ export async function apiRequest<T>(endpoint: string, options: RequestInit = {})
 
     // Se la sessione ha perso il token, prova a rigenerarlo e ripeti una volta
     if (response.status === 419) {
+        csrfInitialized = false;
         await fetch('/sanctum/csrf-cookie', { credentials: 'same-origin' }).catch(() => null);
         response = await doFetch();
     }

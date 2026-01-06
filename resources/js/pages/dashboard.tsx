@@ -1,5 +1,4 @@
 import { ActionsCard, type CreatedEmergency } from '@/components/dashboard/actions-card';
-import { AiAssistant } from '@/components/dashboard/ai-assistant/ai-assistant';
 import { EmergenciesCard } from '@/components/dashboard/emergencies-card';
 import { InvestigationProgressCard } from '@/components/dashboard/investigation-progress-card';
 import { FlowCard } from '@/components/dashboard/flow-card';
@@ -298,8 +297,6 @@ export default function Dashboard() {
                     />
                     <FlowCard items={flowItems} />
                 </div>
-
-                <AiAssistant />
             </div>
         </AppLayout>
     );
