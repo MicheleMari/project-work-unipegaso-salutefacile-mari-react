@@ -83,7 +83,7 @@ export function InvestigationProgressCard({
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Percorsi diagnostici</CardTitle>
+                    <CardTitle>Stato accertamenti preventivi</CardTitle>
                     <CardDescription>Accertamenti richiesti, esito e refertazione</CardDescription>
                 </div>
                 <div className="flex items-center gap-2 rounded-md border px-2 py-1 text-xs font-semibold">

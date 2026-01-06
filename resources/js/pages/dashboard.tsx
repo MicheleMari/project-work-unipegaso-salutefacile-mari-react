@@ -2,6 +2,10 @@ import { ActionsCard, type CreatedEmergency } from '@/components/dashboard/actio
 import { EmergenciesCard } from '@/components/dashboard/emergencies-card';
 import { InvestigationProgressCard } from '@/components/dashboard/investigation-progress-card';
 import { FlowCard } from '@/components/dashboard/flow-card';
+import {
+    SpecialistInvestigationStatusCard,
+    type SpecialistInvestigationRequestRecord,
+} from '@/components/dashboard/specialist-investigation-progress-card';
 import { SummaryGrid } from '@/components/dashboard/summary-grid';
 import { type Arrival118 } from '@/components/dashboard/arrivals-118-card';
 import type { SpecialistCallResult } from '@/components/dashboard/investigation-cards/types';
@@ -104,6 +108,7 @@ export default function Dashboard() {
     const [investigationsPerformed, setInvestigationsPerformed] = useState<
         Record<number, ApiInvestigationPerformed[]>
     >({});
+    const [specialistRequests, setSpecialistRequests] = useState<SpecialistInvestigationRequestRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -128,11 +133,13 @@ export default function Dashboard() {
         let active = true;
         const load = async () => {
             try {
-                const [emergencies, investigationsData, investigationsPerformedData] = await Promise.all([
-                    apiRequest<ApiEmergency[]>('/api/emergencies?limit=50'),
-                    apiRequest<ApiInvestigation[]>('/api/investigations'),
-                    apiRequest<ApiInvestigationPerformed[]>('/api/investigations-performed'),
-                ]);
+                const [emergencies, investigationsData, investigationsPerformedData, specialistRequestsData] =
+                    await Promise.all([
+                        apiRequest<ApiEmergency[]>('/api/emergencies?limit=50'),
+                        apiRequest<ApiInvestigation[]>('/api/investigations'),
+                        apiRequest<ApiInvestigationPerformed[]>('/api/investigations-performed'),
+                        apiRequest<SpecialistInvestigationRequestRecord[]>('/api/specialist-investigation-requests'),
+                    ]);
                 if (active) {
                     setEmergenzeApi(emergencies);
                     setInvestigations(investigationsData);
@@ -145,6 +152,7 @@ export default function Dashboard() {
                         {},
                     );
                     setInvestigationsPerformed(map);
+                    setSpecialistRequests(specialistRequestsData);
                 }
             } catch (err) {
                 if (active) {
@@ -344,12 +352,13 @@ export default function Dashboard() {
                     />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <InvestigationProgressCard
                         investigations={investigations}
                         performedMap={investigationsPerformed}
                         emergencies={emergenzeApi}
                     />
+                    <SpecialistInvestigationStatusCard requests={specialistRequests} />
                     <FlowCard items={flowItems} />
                 </div>
             </div>
