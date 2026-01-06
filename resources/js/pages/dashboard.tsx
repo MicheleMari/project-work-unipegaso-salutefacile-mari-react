@@ -4,6 +4,7 @@ import { InvestigationProgressCard } from '@/components/dashboard/investigation-
 import { FlowCard } from '@/components/dashboard/flow-card';
 import { SummaryGrid } from '@/components/dashboard/summary-grid';
 import { type Arrival118 } from '@/components/dashboard/arrivals-118-card';
+import type { SpecialistCallResult } from '@/components/dashboard/investigation-cards/types';
 import AppLayout from '@/layouts/app-layout';
 import { apiRequest } from '@/lib/api';
 import { dashboard } from '@/routes';
@@ -25,6 +26,18 @@ type ApiPatient = {
     surname?: string;
 };
 
+type ApiSpecialist = {
+    id: number;
+    name: string;
+    surname?: string;
+    department?: {
+        id: number;
+        name?: string | null;
+    } | null;
+    avatar?: string | null;
+    is_available?: boolean | null;
+};
+
 type ApiEmergency = {
     id: number;
     description?: string | null;
@@ -32,6 +45,9 @@ type ApiEmergency = {
     status?: string | null;
     created_at?: string | null;
     patient?: ApiPatient | null;
+    specialist_id?: number | null;
+    specialist_called_at?: string | null;
+    specialist?: ApiSpecialist | null;
 };
 
 type ApiInvestigation = {
@@ -169,6 +185,17 @@ export default function Dashboard() {
                     attesa: '--:--',
                     destinazione: em.status ?? 'In valutazione',
                     stato: em.status ?? 'In triage',
+                    specialist: em.specialist
+                        ? {
+                              id: em.specialist.id,
+                              name: em.specialist.name,
+                              surname: em.specialist.surname ?? '',
+                              department: em.specialist.department?.name ?? null,
+                              avatar: em.specialist.avatar ?? null,
+                              isAvailable: em.specialist.is_available ?? true,
+                              calledAt: em.specialist_called_at ?? undefined,
+                          }
+                        : null,
                     createdAt: em.created_at ?? undefined,
                     performedInvestigationIds: (investigationsPerformed[em.id] ?? []).map(
                         (p) => p.investigation_id,
@@ -265,6 +292,33 @@ export default function Dashboard() {
         [areaCounts],
     );
 
+    const handleSpecialistCalled = (payload: SpecialistCallResult) => {
+        const emergencyId = Number(payload.emergencyId);
+        setEmergenzeApi((prev) =>
+            prev.map((item) => {
+                if (Number(item.id) !== emergencyId) return item;
+                return {
+                    ...item,
+                    status: payload.status ?? item.status ?? 'specialist_called',
+                    specialist_called_at: payload.specialist?.calledAt ?? item.specialist_called_at ?? null,
+                    specialist_id: payload.specialist?.id ?? null,
+                    specialist: payload.specialist
+                        ? {
+                              id: payload.specialist.id,
+                              name: payload.specialist.name,
+                              surname: payload.specialist.surname ?? '',
+                              department: payload.specialist.department
+                                  ? { id: item.specialist?.department?.id ?? 0, name: payload.specialist.department }
+                                  : null,
+                              avatar: payload.specialist.avatar ?? null,
+                              is_available: payload.specialist.isAvailable ?? null,
+                          }
+                        : null,
+                };
+            }),
+        );
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pannello Operativo" />
@@ -280,6 +334,7 @@ export default function Dashboard() {
                         items={emergenze}
                         investigations={investigations}
                         onInvestigationsRecorded={handleInvestigationsRecorded}
+                        onSpecialistCalled={handleSpecialistCalled}
                     />
                     <ActionsCard
                         primaryCta="Avvia triage ora"

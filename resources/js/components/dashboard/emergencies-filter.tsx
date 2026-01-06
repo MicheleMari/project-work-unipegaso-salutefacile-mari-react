@@ -28,6 +28,8 @@ const statusFilterClasses: Record<string, string> = {
         'border-purple-200 bg-purple-500/10 text-purple-700 dark:border-purple-900/60 dark:text-purple-200',
     'Accertamenti preliminari in corso':
         'border-emerald-300 bg-emerald-500/15 text-emerald-800 dark:border-emerald-800 dark:text-emerald-100',
+    'Specialista chiamato':
+        'border-blue-200 bg-blue-500/15 text-blue-800 dark:border-blue-800 dark:text-blue-100',
 };
 
 const statusActiveRing: Record<string, string> = {
@@ -36,6 +38,7 @@ const statusActiveRing: Record<string, string> = {
     'Dimesso': 'ring-emerald-400/70',
     'In trattamento': 'ring-purple-400/70',
     'Accertamenti preliminari in corso': 'ring-emerald-400/70',
+    'Specialista chiamato': 'ring-blue-400/70',
 };
 
 const waitFilterOptions = [

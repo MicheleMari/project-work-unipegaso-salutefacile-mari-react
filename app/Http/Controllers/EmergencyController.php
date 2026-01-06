@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Emergency;
+use App\Models\User;
+use App\Notifications\SpecialistCalledNotification;
+use App\Notifications\SpecialistReminderNotification;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -14,9 +18,21 @@ class EmergencyController extends Controller
         $limit = max(1, min($limit, 200)); // evita richieste troppo pesanti
 
         return Emergency::query()
-            ->select(['id', 'description', 'alert_code', 'patient_id', 'status', 'created_at'])
+            ->select([
+                'id',
+                'description',
+                'alert_code',
+                'patient_id',
+                'user_id',
+                'specialist_id',
+                'status',
+                'specialist_called_at',
+                'created_at',
+            ])
             ->with([
                 'patient:id,name,surname',
+                'specialist:id,name,surname,department_id,avatar_path,is_available',
+                'specialist.department:id,name',
             ])
             ->orderByDesc('created_at')
             ->limit($limit)
@@ -63,5 +79,55 @@ class EmergencyController extends Controller
         $emergency->delete();
 
         return response()->noContent();
+    }
+
+    public function callSpecialist(Request $request, Emergency $emergency)
+    {
+        $data = $request->validate([
+            'specialist_id' => 'required|exists:users,id',
+            'message' => 'nullable|string|max:500',
+        ]);
+
+        $specialist = User::findOrFail($data['specialist_id']);
+
+        DB::transaction(function () use ($emergency, $specialist, $data) {
+            $emergency->update([
+                'specialist_id' => $specialist->id,
+                'specialist_called_at' => now(),
+                'status' => 'specialist_called',
+            ]);
+
+            $emergency->loadMissing('patient');
+
+            if ($specialist->is_available !== false) {
+                $specialist->forceFill(['is_available' => false])->save();
+            }
+
+            $specialist->notify(new SpecialistCalledNotification($emergency, $data['message'] ?? null));
+        });
+
+        return $emergency->load([
+            'patient:id,name,surname',
+            'specialist:id,name,surname,department_id,avatar_path,is_available',
+            'specialist.department:id,name',
+        ]);
+    }
+
+    public function remindSpecialist(Request $request, Emergency $emergency)
+    {
+        $data = $request->validate([
+            'message' => 'nullable|string|max:500',
+        ]);
+
+        if (! $emergency->specialist_id) {
+            return response()->json(['message' => 'Nessuno specialista associato'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $specialist = User::findOrFail($emergency->specialist_id);
+        $emergency->loadMissing('patient');
+
+        $specialist->notify(new SpecialistReminderNotification($emergency, $data['message'] ?? null));
+
+        return response()->json(['status' => 'reminded'], Response::HTTP_OK);
     }
 }

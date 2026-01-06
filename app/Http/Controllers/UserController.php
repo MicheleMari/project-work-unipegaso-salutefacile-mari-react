@@ -8,7 +8,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        return User::select('id', 'name', 'surname', 'email', 'department_id')
+        return User::select('id', 'name', 'surname', 'email', 'department_id', 'is_available', 'avatar_path')
             ->with('department:id,name')
             ->orderBy('name')
             ->get();

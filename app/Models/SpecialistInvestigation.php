@@ -14,7 +14,13 @@ class SpecialistInvestigation extends Model
         'title',
         'description',
         'discipline',
+        'department_id',
     ];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
 
     public function requests(): HasMany
     {

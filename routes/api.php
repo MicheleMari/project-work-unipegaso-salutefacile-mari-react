@@ -25,4 +25,6 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::apiResource('attachments', AttachmentController::class);
     Route::get('users', [UserController::class, 'index']);
     Route::post('triage-suggest', TriageSuggestController::class);
+    Route::post('emergencies/{emergency}/call-specialist', [EmergencyController::class, 'callSpecialist']);
+    Route::post('emergencies/{emergency}/remind-specialist', [EmergencyController::class, 'remindSpecialist']);
 });

@@ -18,10 +18,13 @@ class Emergency extends Model
         'patient_id',
         'vital_signs',
         'status',
+        'specialist_id',
+        'specialist_called_at',
     ];
 
     protected $casts = [
         'vital_signs' => 'array',
+        'specialist_called_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -32,6 +35,11 @@ class Emergency extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function specialist(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'specialist_id');
     }
 
     public function investigationsPerformed(): HasMany

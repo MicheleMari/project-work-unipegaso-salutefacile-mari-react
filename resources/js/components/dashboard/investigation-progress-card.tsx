@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClipboardCheck, FlaskConical } from 'lucide-react';
@@ -37,27 +39,45 @@ export function InvestigationProgressCard({
     performedMap,
     emergencies,
 }: InvestigationProgressCardProps) {
+    const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
     const performed = Object.values(performedMap).flat();
     const totalRequested = performed.length;
     const completed = performed.filter((item) => Boolean(item.outcome?.trim())).length;
     const pending = totalRequested - completed;
     const completionRate = totalRequested > 0 ? Math.round((completed / totalRequested) * 100) : 0;
 
-    const latest = performed
-        .slice()
-        .sort((a, b) => {
-            const timeA = a.performed_at ? new Date(a.performed_at).getTime() : 0;
-            const timeB = b.performed_at ? new Date(b.performed_at).getTime() : 0;
-            return timeB - timeA;
-        })
-        .slice(0, 4)
-        .map((item) => ({
-            ...item,
-            exam: investigations.find((inv) => inv.id === item.investigation_id)?.title ?? 'Accertamento',
-            patient: formatPatientName(
-                emergencies.find((em) => em.id === item.emergency_id)?.patient ?? null,
-            ),
-        }));
+    const filtered = useMemo(() => {
+        return performed
+            .slice()
+            .sort((a, b) => {
+                const timeA = a.performed_at ? new Date(a.performed_at).getTime() : 0;
+                const timeB = b.performed_at ? new Date(b.performed_at).getTime() : 0;
+                return timeB - timeA;
+            })
+            .filter((item) => {
+                if (filter === 'completed') {
+                    return Boolean(item.outcome?.trim());
+                }
+                if (filter === 'pending') {
+                    return !item.outcome?.trim();
+                }
+                return true;
+            })
+            .map((item) => ({
+                ...item,
+                exam: investigations.find((inv) => inv.id === item.investigation_id)?.title ?? 'Accertamento',
+                patient: formatPatientName(
+                    emergencies.find((em) => em.id === item.emergency_id)?.patient ?? null,
+                ),
+            }));
+    }, [emergencies, filter, investigations, performed]);
+
+    const filterLabel =
+        filter === 'completed'
+            ? 'Refertati'
+            : filter === 'pending'
+              ? 'In attesa esito'
+              : 'Richiesti';
 
     return (
         <Card>
@@ -73,31 +93,55 @@ export function InvestigationProgressCard({
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                    <div className="rounded-lg border border-blue-200/70 bg-blue-500/10 p-3 dark:border-blue-900/40">
+                    <button
+                        type="button"
+                        onClick={() => setFilter('all')}
+                        className={`rounded-lg border p-3 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                            filter === 'all'
+                                ? 'border-blue-500/60 bg-blue-500/15 dark:border-blue-400/50'
+                                : 'border-blue-200/70 bg-blue-500/10 dark:border-blue-900/40'
+                        }`}
+                    >
                         <p className="text-xs text-blue-700 dark:text-blue-200">Richiesti</p>
                         <p className="text-lg font-semibold text-blue-800 dark:text-blue-100">
                             {totalRequested}
                         </p>
-                    </div>
-                    <div className="rounded-lg border border-amber-200/70 bg-amber-500/10 p-3 dark:border-amber-900/40">
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setFilter('pending')}
+                        className={`rounded-lg border p-3 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                            filter === 'pending'
+                                ? 'border-amber-500/60 bg-amber-500/15 dark:border-amber-400/50'
+                                : 'border-amber-200/70 bg-amber-500/10 dark:border-amber-900/40'
+                        }`}
+                    >
                         <p className="text-xs text-amber-700 dark:text-amber-200">In attesa esito</p>
                         <p className="text-lg font-semibold text-amber-800 dark:text-amber-100">
                             {pending}
                         </p>
-                    </div>
-                    <div className="rounded-lg border border-emerald-200/70 bg-emerald-500/10 p-3 dark:border-emerald-900/40">
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setFilter('completed')}
+                        className={`rounded-lg border p-3 transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                            filter === 'completed'
+                                ? 'border-emerald-500/60 bg-emerald-500/15 dark:border-emerald-400/50'
+                                : 'border-emerald-200/70 bg-emerald-500/10 dark:border-emerald-900/40'
+                        }`}
+                    >
                         <p className="text-xs text-emerald-700 dark:text-emerald-200">Refertati</p>
                         <p className="text-lg font-semibold text-emerald-800 dark:text-emerald-100">
                             {completed}
                         </p>
-                    </div>
+                    </button>
                 </div>
 
                 <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm font-medium">
-                        <span>Ultimi accertamenti</span>
+                        <span>{filterLabel}</span>
                         <span className="text-muted-foreground">
-                            {totalRequested > 0 ? `${totalRequested} totali` : 'Nessuna richiesta'}
+                            {totalRequested > 0 ? `${filtered.length} mostrati` : 'Nessuna richiesta'}
                         </span>
                     </div>
                     {totalRequested === 0 ? (
@@ -105,44 +149,52 @@ export function InvestigationProgressCard({
                             Non sono presenti accertamenti richiesti o in corso.
                         </p>
                     ) : (
-                        <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
-                            {latest.map((item) => {
-                                const status = item.outcome?.trim()
-                                    ? {
-                                          label: 'Refertato',
-                                          className:
-                                              'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/40 dark:text-emerald-200',
-                                      }
-                                    : {
-                                          label: 'In attesa esito',
-                                          className:
-                                              'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/40 dark:text-amber-200',
-                                      };
+                        <>
+                            {filtered.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">
+                                    Nessun accertamento per la categoria selezionata.
+                                </p>
+                            ) : (
+                                <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+                                    {filtered.map((item) => {
+                                        const status = item.outcome?.trim()
+                                            ? {
+                                                  label: 'Refertato',
+                                                  className:
+                                                      'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/40 dark:text-emerald-200',
+                                              }
+                                            : {
+                                                  label: 'In attesa esito',
+                                                  className:
+                                                      'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/40 dark:text-amber-200',
+                                              };
 
-                                return (
-                                    <div
-                                        key={item.id}
-                                        className="flex items-start justify-between rounded-lg border border-border/70 bg-background/80 px-3 py-2"
-                                    >
-                                        <div className="flex items-start gap-2">
-                                            <FlaskConical className="mt-0.5 size-4 text-muted-foreground" />
-                                            <div className="space-y-0.5">
-                                                <p className="text-sm font-semibold leading-tight">{item.exam}</p>
-                                                <p className="text-xs text-muted-foreground">{item.patient}</p>
-                                                <p className="text-[11px] text-muted-foreground">
-                                                    {item.performed_at
-                                                        ? `Richiesto ${formatRelative(item.performed_at)}`
-                                                        : 'Data non disponibile'}
-                                                </p>
+                                        return (
+                                            <div
+                                                key={item.id}
+                                                className="flex items-start justify-between rounded-lg border border-border/70 bg-background/80 px-3 py-2"
+                                            >
+                                                <div className="flex items-start gap-2">
+                                                    <FlaskConical className="mt-0.5 size-4 text-muted-foreground" />
+                                                    <div className="space-y-0.5">
+                                                        <p className="text-sm font-semibold leading-tight">{item.exam}</p>
+                                                        <p className="text-xs text-muted-foreground">{item.patient}</p>
+                                                        <p className="text-[11px] text-muted-foreground">
+                                                            {item.performed_at
+                                                                ? `Richiesto ${formatRelative(item.performed_at)}`
+                                                                : 'Data non disponibile'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Badge variant="outline" className={status.className}>
+                                                    {status.label}
+                                                </Badge>
                                             </div>
-                                        </div>
-                                        <Badge variant="outline" className={status.className}>
-                                            {status.label}
-                                        </Badge>
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </CardContent>

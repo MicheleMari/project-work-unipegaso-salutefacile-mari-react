@@ -110,5 +110,7 @@ class DatabaseSeeder extends Seeder
             ['title' => 'Glucometria', 'description' => 'Misurazione glicemia capillare', 'created_at' => $now, 'updated_at' => $now],
             ['title' => 'Alcol Test', 'description' => 'Test alcolemico', 'created_at' => $now, 'updated_at' => $now],
         ], ['title'], ['description', 'updated_at']);
+
+        $this->call(SpecialistInvestigationsSeeder::class);
     }
 }

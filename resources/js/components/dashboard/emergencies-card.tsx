@@ -7,6 +7,8 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AlertTriangle, Ambulance, Paperclip, Stethoscope } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PatientDetailsDialog } from '@/components/dashboard/patient-details-dialog';
@@ -15,10 +17,8 @@ import {
     type PreliminaryExam,
 } from '@/components/dashboard/preliminary-exams-dialog';
 import { EmergenciesFilter } from '@/components/dashboard/emergencies-filter';
-import {
-    InvestigationStatusDialog,
-    type InvestigationPerformed,
-} from '@/components/dashboard/investigation-status-dialog';
+import { InvestigationStatusDialog } from '@/components/dashboard/investigation-status-dialog';
+import { type InvestigationPerformed, type SpecialistCallResult } from '@/components/dashboard/investigation-cards/types';
 import { patchJson, postJson } from '@/lib/api';
 import { usePage } from '@inertiajs/react';
 import type { SharedData } from '@/types';
@@ -35,12 +35,22 @@ type EmergencyItem = {
     createdAt?: string;
     performedInvestigationIds: number[];
     performedInvestigations: InvestigationPerformed[];
+    specialist?: {
+        id: number;
+        name: string;
+        surname?: string;
+        department?: string | null;
+        avatar?: string | null;
+        isAvailable?: boolean | null;
+        calledAt?: string | undefined;
+    } | null;
 };
 
 type EmergenciesCardProps = {
     items: EmergencyItem[];
     investigations: PreliminaryExam[];
     onInvestigationsRecorded?: (emergencyId: number, records: InvestigationPerformed[]) => void;
+    onSpecialistCalled?: (payload: SpecialistCallResult) => void;
 };
 
 const codiceBadgeClasses: Record<EmergencyItem['codice'], string> = {
@@ -51,7 +61,12 @@ const codiceBadgeClasses: Record<EmergencyItem['codice'], string> = {
         'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/50 dark:text-emerald-200',
 };
 
-export function EmergenciesCard({ items, investigations, onInvestigationsRecorded }: EmergenciesCardProps) {
+export function EmergenciesCard({
+    items,
+    investigations,
+    onInvestigationsRecorded,
+    onSpecialistCalled,
+}: EmergenciesCardProps) {
     const page = usePage<{ props: SharedData }>();
     const currentUserId = page?.props?.auth?.user?.id ?? null;
     const [flowOpen, setFlowOpen] = useState(false);
@@ -65,16 +80,38 @@ export function EmergenciesCard({ items, investigations, onInvestigationsRecorde
     const [now, setNow] = useState(() => Date.now());
     const [statusDialogOpen, setStatusDialogOpen] = useState(false);
     const [outcomeDrafts, setOutcomeDrafts] = useState<Record<number, string>>({});
+    const [calledSpecialist, setCalledSpecialist] = useState<{
+        emergencyId: number | string;
+        specialist: NonNullable<EmergencyItem['specialist']>;
+    } | null>(null);
+    const [calledSpecialistDialogOpen, setCalledSpecialistDialogOpen] = useState(false);
 
     useEffect(() => {
         const interval = window.setInterval(() => setNow(Date.now()), 1000);
         return () => window.clearInterval(interval);
     }, []);
 
+    const averageTriageTime = useMemo(() => {
+        const durations = items
+            .map((item) => {
+                if (!item.createdAt) return null;
+                const created = new Date(item.createdAt).getTime();
+                if (Number.isNaN(created)) return null;
+                return Math.max(0, now - created);
+            })
+            .filter((value): value is number => value !== null);
+
+        if (durations.length === 0) return '--:--';
+        const avg = durations.reduce((sum, ms) => sum + ms, 0) / durations.length;
+        return formatDuration(avg);
+    }, [items, now]);
+
     const getDisplayStatus = (item: EmergencyItem) =>
-        item.performedInvestigationIds.length > 0
-            ? 'Accertamenti preliminari in corso'
-            : item.stato;
+        item.specialist?.id
+            ? 'Specialista chiamato'
+            : item.performedInvestigationIds.length > 0
+                ? 'Accertamenti preliminari in corso'
+                : item.stato;
 
     const codiceOptions = useMemo(
         () => Array.from(new Set(items.map((item) => item.codice))) as EmergencyItem['codice'][],
@@ -120,6 +157,34 @@ export function EmergenciesCard({ items, investigations, onInvestigationsRecorde
         );
         setOutcomeDrafts(drafts);
         setStatusDialogOpen(true);
+    };
+
+    const handleSpecialistCalled = (payload: SpecialistCallResult) => {
+        const specialist =
+            payload.specialist && payload.specialist.id
+                ? {
+                      id: payload.specialist.id,
+                      name: payload.specialist.name,
+                      surname: payload.specialist.surname ?? '',
+                      department: payload.specialist.department ?? null,
+                      avatar: payload.specialist.avatar ?? null,
+                      isAvailable: payload.specialist.isAvailable ?? null,
+                      calledAt: payload.specialist.calledAt ?? undefined,
+                  }
+                : null;
+
+        setSelected((prev) =>
+            prev && prev.id === payload.emergencyId
+                ? { ...prev, specialist, stato: payload.status ?? prev.stato }
+                : prev,
+        );
+        onSpecialistCalled?.(payload);
+    };
+
+    const openSpecialistDetails = (item: EmergencyItem) => {
+        if (!item.specialist) return;
+        setCalledSpecialist({ emergencyId: item.id, specialist: item.specialist });
+        setCalledSpecialistDialogOpen(true);
     };
 
     const handleConfirmInvestigations = async (examIds: string[]) => {
@@ -219,7 +284,7 @@ export function EmergenciesCard({ items, investigations, onInvestigationsRecorde
                             variant="outline"
                             className="border-blue-200 bg-blue-500/10 text-blue-700 dark:border-blue-900/50 dark:text-blue-200"
                         >
-                            Tempo medio triage 07:10
+                            Tempo medio triage {averageTriageTime}
                         </Badge>
                         <Badge
                             variant="outline"
@@ -303,6 +368,16 @@ export function EmergenciesCard({ items, investigations, onInvestigationsRecorde
                                                 Visualizza stato accertamenti
                                             </Button>
                                         ) : null}
+                                        {item.specialist ? (
+                                            <Button
+                                                variant="link"
+                                                size="sm"
+                                                className="px-0 text-blue-700 hover:text-blue-600 dark:text-blue-200"
+                                                onClick={() => openSpecialistDetails(item)}
+                                            >
+                                                Visualizza specialista chiamato
+                                            </Button>
+                                        ) : null}
                                     </div>
                                 </div>
                             );
@@ -326,6 +401,7 @@ export function EmergenciesCard({ items, investigations, onInvestigationsRecorde
 
             <InvestigationStatusDialog
                 open={statusDialogOpen}
+                emergencyId={selected?.id}
                 patientName={selected?.paziente ?? ''}
                 investigations={investigations}
                 performed={selected?.performedInvestigations ?? []}
@@ -337,6 +413,7 @@ export function EmergenciesCard({ items, investigations, onInvestigationsRecorde
                     }))
                 }
                 onSave={handleSaveOutcome}
+                onSpecialistCalled={handleSpecialistCalled}
                 onOpenChange={(open) => {
                     setStatusDialogOpen(open);
                 }}
@@ -348,7 +425,92 @@ export function EmergenciesCard({ items, investigations, onInvestigationsRecorde
                 patientName={patientDialogName}
                 onOpenChange={setPatientDialogOpen}
             />
+            <SpecialistDetailsDialog
+                open={calledSpecialistDialogOpen}
+                onOpenChange={setCalledSpecialistDialogOpen}
+                specialistData={calledSpecialist}
+            />
         </>
+    );
+}
+
+type SpecialistDetailsDialogProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    specialistData: {
+        emergencyId: number | string;
+        specialist: NonNullable<EmergencyItem['specialist']>;
+    } | null;
+};
+
+function SpecialistDetailsDialog({ open, onOpenChange, specialistData }: SpecialistDetailsDialogProps) {
+    const specialist = specialistData?.specialist;
+    const [reminding, setReminding] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    if (!specialist) {
+        return null;
+    }
+
+    const handleRemind = async () => {
+        if (!specialistData) return;
+        setReminding(true);
+        setError(null);
+        try {
+            await postJson(`/api/emergencies/${specialistData.emergencyId}/remind-specialist`, {});
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Errore durante il sollecito');
+        } finally {
+            setReminding(false);
+        }
+    };
+
+    const initials = `${specialist.name?.[0] ?? ''}${specialist.surname?.[0] ?? ''}`.trim() || '?';
+    const calledAtText = formatSince(specialist.calledAt);
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-lg">
+                <DialogHeader>
+                    <DialogTitle>Specialista chiamato</DialogTitle>
+                </DialogHeader>
+                <div className="flex items-center gap-3">
+                    <Avatar className="size-12">
+                        <AvatarImage src={specialist.avatar ?? undefined} alt={`${specialist.name} ${specialist.surname}`} />
+                        <AvatarFallback className="text-base font-semibold">{initials}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col gap-1">
+                        <p className="text-sm font-semibold text-foreground">
+                            {specialist.name} {specialist.surname}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{specialist.department ?? 'Reparto non indicato'}</p>
+                        <p className="text-xs text-muted-foreground">
+                            Chiamato {calledAtText ? `${calledAtText} fa` : '—'}
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center justify-between">
+                    <span
+                        className={`inline-flex w-fit items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium ${
+                            specialist.isAvailable
+                                ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-200'
+                                : 'bg-amber-500/15 text-amber-800 dark:text-amber-100'
+                        }`}
+                    >
+                        <span
+                            className={`size-2 rounded-full ${
+                                specialist.isAvailable ? 'bg-emerald-500' : 'bg-amber-500'
+                            }`}
+                        />
+                        {specialist.isAvailable ? 'Disponibile' : 'Occupato'}
+                    </span>
+                    <Button variant="outline" onClick={handleRemind} disabled={reminding}>
+                        {reminding ? 'Invio...' : 'Sollecita'}
+                    </Button>
+                </div>
+                {error ? <p className="text-xs font-medium text-red-600">{error}</p> : null}
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -356,6 +518,19 @@ function formatStatus(status: string) {
     if (!status) return '';
     const spaced = status.replace(/_/g, ' ').trim();
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+function formatSince(date?: string) {
+    if (!date) return '';
+    const target = new Date(date).getTime();
+    if (Number.isNaN(target)) return '';
+    const diffMs = Date.now() - target;
+    const minutes = Math.floor(diffMs / 60_000);
+    if (minutes < 1) return 'pochi secondi';
+    if (minutes < 60) return `${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    const remMinutes = minutes % 60;
+    return remMinutes ? `${hours}h ${remMinutes}m` : `${hours}h`;
 }
 
 function formatElapsed(createdAt: EmergencyItem['createdAt'], nowMs: number) {
@@ -370,6 +545,13 @@ function formatElapsed(createdAt: EmergencyItem['createdAt'], nowMs: number) {
 
     const pad = (value: number) => value.toString().padStart(2, '0');
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+}
+
+function formatDuration(durationMs: number) {
+    const safeDuration = Math.max(0, durationMs);
+    const hours = Math.floor(safeDuration / 3_600_000);
+    const minutes = Math.floor((safeDuration % 3_600_000) / 60_000);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }
 
 function getWaitTone(item: EmergencyItem, nowMs: number) {

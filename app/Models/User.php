@@ -27,6 +27,7 @@ class User extends Authenticatable
         'surname',
         'permission_id',
         'department_id',
+        'is_available',
         'user_identity_code',
         'email',
         'password_hash',
@@ -73,6 +74,7 @@ class User extends Authenticatable
     {
         return [
             'two_factor_confirmed_at' => 'datetime',
+            'is_available' => 'boolean',
         ];
     }
 

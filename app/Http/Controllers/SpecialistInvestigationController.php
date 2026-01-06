@@ -10,7 +10,7 @@ class SpecialistInvestigationController extends Controller
 {
     public function index()
     {
-        return SpecialistInvestigation::all();
+        return SpecialistInvestigation::with('department:id,name')->get();
     }
 
     public function store(Request $request)
@@ -19,6 +19,7 @@ class SpecialistInvestigationController extends Controller
             'title' => 'required|string|max:150|unique:specialist_investigations,title',
             'description' => 'nullable|string',
             'discipline' => 'nullable|string|max:120',
+            'department_id' => 'nullable|exists:departments,id',
         ]);
 
         return response(SpecialistInvestigation::create($data), Response::HTTP_CREATED);
@@ -35,6 +36,7 @@ class SpecialistInvestigationController extends Controller
             'title' => 'required|string|max:150|unique:specialist_investigations,title,' . $specialistInvestigation->id,
             'description' => 'nullable|string',
             'discipline' => 'nullable|string|max:120',
+            'department_id' => 'nullable|exists:departments,id',
         ]);
 
         $specialistInvestigation->update($data);
