@@ -233,6 +233,35 @@ export function EmergenciesCard({
         onInvestigationsRecorded?.(emergencyId, created);
     };
 
+    const handleAdvancedInvestigationsRequest = async (investigationIds: number[]) => {
+        if (!investigationIds.length) {
+            return;
+        }
+        if (!selected?.id) {
+            throw new Error('Emergenza non selezionata');
+        }
+        if (!currentUserId) {
+            throw new Error('Sessione non valida: effettua di nuovo il login');
+        }
+
+        const emergencyId = Number(selected.id);
+        if (Number.isNaN(emergencyId)) {
+            throw new Error('Identificativo emergenza non valido');
+        }
+
+        await Promise.all(
+            investigationIds.map((investigationId) =>
+                postJson('/api/specialist-investigation-requests', {
+                    emergency_id: emergencyId,
+                    specialist_investigation_id: Number(investigationId),
+                    requested_by: currentUserId,
+                    status: 'requested',
+                    requested_at: new Date().toISOString(),
+                }),
+            ),
+        );
+    };
+
     const handleSaveOutcome = async (performed: InvestigationPerformed) => {
         if (!currentUserId) {
             throw new Error('Sessione non valida: effettua di nuovo il login');
@@ -414,6 +443,7 @@ export function EmergenciesCard({
                 }
                 onSave={handleSaveOutcome}
                 onSpecialistCalled={handleSpecialistCalled}
+                onAdvancedInvestigationsSelect={handleAdvancedInvestigationsRequest}
                 onOpenChange={(open) => {
                     setStatusDialogOpen(open);
                 }}

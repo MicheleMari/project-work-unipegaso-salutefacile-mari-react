@@ -91,6 +91,7 @@ export type AdvancedInvestigationsDialogProps = {
     selected: Set<number>;
     onToggle: (id: number) => void;
     onConfirm: () => Promise<void> | void;
+    submitting?: boolean;
 };
 
 export type InvestigationCardProps = {

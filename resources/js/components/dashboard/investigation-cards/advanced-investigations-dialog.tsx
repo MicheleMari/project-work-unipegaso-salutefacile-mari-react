@@ -13,6 +13,7 @@ export function AdvancedInvestigationsDialog({
     selected,
     onToggle,
     onConfirm,
+    submitting,
 }: AdvancedInvestigationsDialogProps) {
     const [search, setSearch] = useState('');
 
@@ -86,7 +87,7 @@ export function AdvancedInvestigationsDialog({
                     <Button variant="ghost" onClick={() => onOpenChange(false)}>
                         Annulla
                     </Button>
-                    <Button onClick={onConfirm} disabled={!selected.size}>
+                    <Button onClick={onConfirm} disabled={!selected.size || submitting}>
                         Conferma
                     </Button>
                 </div>
