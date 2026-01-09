@@ -62,7 +62,7 @@ export function EmergencyCardItem({
                         {item.paziente}
                     </button>
                     <p className="text-xs text-muted-foreground">{item.arrivo}</p>
-                    {['risolto_in_ambulanza', 'omi'].includes((item.stato ?? '').replace(/\./g, '').toLowerCase()) ? null : (
+                    {['risolto_in_ambulanza', 'obi'].includes((item.stato ?? '').replace(/\./g, '').toLowerCase()) ? null : (
                         <div
                             className={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-[11px] font-semibold ${waitTone.className}`}
                         >
@@ -134,7 +134,7 @@ export function EmergencyCardItem({
                                 onClick={() => onSetOmi(item)}
                                 disabled={omiLoading}
                             >
-                                {omiLoading ? 'Invio...' : 'O.M.I.'}
+                                {omiLoading ? 'Invio...' : 'O.B.I.'}
                             </Button>
                         ) : null}
                         <Button

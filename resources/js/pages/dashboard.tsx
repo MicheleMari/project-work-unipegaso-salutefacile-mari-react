@@ -315,7 +315,7 @@ export default function Dashboard() {
         const inDimissione = emergenzeApi.filter((e) =>
             (e.status ?? '').toLowerCase().includes('dimission'),
         ).length;
-        const omiCount = emergenze.filter((e) => (e.stato ?? '').toLowerCase() === 'omi').length;
+        const omiCount = emergenze.filter((e) => (e.stato ?? '').toLowerCase() === 'obi').length;
         const postiDisponibili = Math.max(0, obiCapacity - omiCount);
 
         return [

@@ -56,7 +56,7 @@ const statusBadgeClasses: Record<string, string> = {
     'Risolto in ambulanza': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
     'Referto inviato': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
     Chiusura: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
-    'O.M.I.': 'bg-purple-500/15 text-purple-800 dark:text-purple-100',
+    'O.B.I.': 'bg-purple-500/15 text-purple-800 dark:text-purple-100',
 };
 
 export function EmergenciesCard({
@@ -97,7 +97,7 @@ export function EmergenciesCard({
     const [omiError, setOmiError] = useState<string | null>(null);
 
     const isOmi = (item: EmergencyItem) =>
-        (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'omi';
+        (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'obi';
     const isClosing = (item: EmergencyItem) =>
         (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'chiusura' || isOmi(item);
 
@@ -124,7 +124,7 @@ export function EmergenciesCard({
     const getDisplayStatus = (item: EmergencyItem) => {
         const normalized = (item.stato ?? '').replace(/\./g, '').toLowerCase();
         if (normalized === 'chiusura') return 'Chiusura';
-        if (normalized === 'omi') return 'omi';
+        if (normalized === 'obi') return 'obi';
         if (item.specialist?.id) return 'Specialista chiamato';
         if (item.performedInvestigationIds.length > 0) return 'Accertamenti preliminari in corso';
         return item.stato;
@@ -227,9 +227,9 @@ export function EmergenciesCard({
         try {
             const updated = await patchJson<{ id: number | string; status?: string | null }>(
                 `/api/emergencies/${emergencyId}`,
-                { status: 'omi' },
+                { status: 'obi' },
             );
-            const updatedStatus = updated.status ?? 'omi';
+            const updatedStatus = updated.status ?? 'obi';
             onEmergencyUpdated?.({ id: updated.id ?? emergencyId, status: updatedStatus });
             setSelected((prev) =>
                 prev && Number(prev.id) === emergencyId ? { ...prev, stato: updatedStatus } : prev,
@@ -407,7 +407,7 @@ export function EmergenciesCard({
                                     allowInvestigationActions={showInvestigationActions && (!isClosing(item) || isOmi(item))}
                                     showSpecialistActions={showSpecialistActions}
                                     isClosing={isClosing(item)}
-                                    showOmiAction={(item.stato ?? '').replace(/\./g, '').toLowerCase() !== 'omi'}
+                                    showOmiAction={(item.stato ?? '').replace(/\./g, '').toLowerCase() !== 'obi'}
                                     omiLoading={omiUpdatingId === Number(item.id)}
                                     onOpenPatientDetails={openPatientDetails}
                                     onOpenFlow={handleOpenFlow}
@@ -580,7 +580,7 @@ function formatStatus(status: string) {
     if (status === 'referto_inviato') return 'Referto inviato';
     const normalized = status.replace(/\./g, '').toLowerCase();
     if (normalized === 'chiusura') return 'Chiusura';
-    if (normalized === 'omi') return 'O.M.I.';
+    if (normalized === 'obi') return 'O.B.I.';
     const spaced = status.replace(/_/g, ' ').trim();
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
