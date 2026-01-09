@@ -6,11 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
+import { refreshCsrfCookie } from '@/lib/csrf';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { type FormComponentSlotProps } from '@inertiajs/core';
 import { Form, Head } from '@inertiajs/react';
 import { Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import { type FormEvent, useRef, useState } from 'react';
 
 interface LoginProps {
     status?: string;
@@ -24,6 +26,14 @@ export default function Login({
     const [rememberSelected, setRememberSelected] = useState(false);
     const [identifierInput, setIdentifierInput] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const formRef = useRef<FormComponentSlotProps | null>(null);
+
+    const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        await refreshCsrfCookie();
+        formRef.current?.submit();
+    };
 
     return (
         <AuthLayout
@@ -35,6 +45,8 @@ export default function Login({
             <Form
                 {...store.form()}
                 className="flex flex-col gap-6"
+                ref={formRef}
+                onSubmitCapture={handleLoginSubmit}
             >
                 {({ processing, errors }) => (
                     <>
