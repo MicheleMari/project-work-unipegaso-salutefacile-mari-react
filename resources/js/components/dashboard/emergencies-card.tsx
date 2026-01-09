@@ -22,6 +22,7 @@ import { type InvestigationPerformed, type SpecialistCallResult } from '@/compon
 import { patchJson, postJson } from '@/lib/api';
 import { usePage } from '@inertiajs/react';
 import type { SharedData } from '@/types';
+import { DischargePreviewDialog } from '@/components/dashboard/discharge-preview-dialog';
 
 type EmergencyItem = {
     id: number | string;
@@ -44,6 +45,12 @@ type EmergencyItem = {
         avatar?: string | null;
         isAvailable?: boolean | null;
         calledAt?: string | undefined;
+    } | null;
+    result?: {
+        notes?: string | null;
+        disposition?: string | null;
+        needs_follow_up?: boolean | null;
+        reported_at?: string | null;
     } | null;
 };
 
@@ -107,6 +114,13 @@ export function EmergenciesCard({
         specialist: NonNullable<EmergencyItem['specialist']>;
     } | null>(null);
     const [calledSpecialistDialogOpen, setCalledSpecialistDialogOpen] = useState(false);
+    const [dischargeDialogOpen, setDischargeDialogOpen] = useState(false);
+    const [dischargeItem, setDischargeItem] = useState<EmergencyItem | null>(null);
+    const [dischargeAt, setDischargeAt] = useState<string>('');
+    const [dischargeEmail, setDischargeEmail] = useState('');
+    const [dischargeEmailError, setDischargeEmailError] = useState<string | null>(null);
+
+    const isClosing = (item: EmergencyItem) => (item.stato ?? '').toLowerCase() === 'chiusura';
 
     useEffect(() => {
         const interval = window.setInterval(() => setNow(Date.now()), 1000);
@@ -129,11 +143,13 @@ export function EmergenciesCard({
     }, [items, now]);
 
     const getDisplayStatus = (item: EmergencyItem) =>
-        item.specialist?.id
-            ? 'Specialista chiamato'
-            : item.performedInvestigationIds.length > 0
-                ? 'Accertamenti preliminari in corso'
-                : item.stato;
+        item.stato?.toLowerCase() === 'chiusura'
+            ? 'Chiusura'
+            : item.specialist?.id
+                ? 'Specialista chiamato'
+                : item.performedInvestigationIds.length > 0
+                    ? 'Accertamenti preliminari in corso'
+                    : item.stato;
 
     const codiceOptions = useMemo(
         () => Array.from(new Set(items.map((item) => item.codice))) as EmergencyItem['codice'][],
@@ -148,6 +164,10 @@ export function EmergenciesCard({
             ).filter(Boolean),
         [items],
     );
+    const investigationsById = useMemo(() => {
+        const entries = investigations.map((exam) => [Number(exam.id), exam.title] as const);
+        return new Map<number, string>(entries);
+    }, [investigations]);
 
     const filteredItems = useMemo(
         () =>
@@ -207,6 +227,13 @@ export function EmergenciesCard({
         if (!item.specialist) return;
         setCalledSpecialist({ emergencyId: item.id, specialist: item.specialist });
         setCalledSpecialistDialogOpen(true);
+    };
+    const openDischargePreview = (item: EmergencyItem) => {
+        setDischargeItem(item);
+        setDischargeAt(new Date().toISOString());
+        setDischargeEmail('');
+        setDischargeEmailError(null);
+        setDischargeDialogOpen(true);
     };
 
     const handleConfirmInvestigations = async (examIds: string[]) => {
@@ -408,7 +435,7 @@ export function EmergenciesCard({
                                             <Stethoscope className="size-3.5" />
                                             {formatStatus(getDisplayStatus(item))}
                                         </span>
-                                        {showInvestigationActions ? (
+                                        {showInvestigationActions && !isClosing(item) ? (
                                             <Button
                                                 size="sm"
                                                 variant="outline"
@@ -419,7 +446,9 @@ export function EmergenciesCard({
                                                 Richiesta accertamenti preliminari
                                             </Button>
                                         ) : null}
-                                        {showInvestigationActions && item.performedInvestigationIds.length > 0 ? (
+                                        {showInvestigationActions &&
+                                        item.performedInvestigationIds.length > 0 &&
+                                        !isClosing(item) ? (
                                             <Button
                                                 variant="link"
                                                 size="sm"
@@ -429,7 +458,7 @@ export function EmergenciesCard({
                                                 Visualizza stato accertamenti
                                             </Button>
                                         ) : null}
-                                        {showSpecialistActions && item.specialist ? (
+                                        {showSpecialistActions && item.specialist && !isClosing(item) ? (
                                             <Button
                                                 variant="link"
                                                 size="sm"
@@ -438,6 +467,32 @@ export function EmergenciesCard({
                                             >
                                                 Visualizza specialista chiamato
                                             </Button>
+                                        ) : null}
+                                        {isClosing(item) ? (
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="border-emerald-200 bg-emerald-500/10 text-emerald-800 hover:bg-emerald-500/15 dark:border-emerald-800 dark:text-emerald-100"
+                                                    onClick={() => openDischargePreview(item)}
+                                                >
+                                                    Dimetti
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="border-purple-200 bg-purple-500/10 text-purple-800 hover:bg-purple-500/15 dark:border-purple-800 dark:text-purple-100"
+                                                >
+                                                    O.M.I.
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="border-red-200 bg-red-500/10 text-red-800 hover:bg-red-500/15 dark:border-red-900 dark:text-red-100"
+                                                >
+                                                    Ricovera
+                                                </Button>
+                                            </div>
                                         ) : null}
                                     </div>
                                 </div>
@@ -498,6 +553,24 @@ export function EmergenciesCard({
                     specialistData={calledSpecialist}
                 />
             ) : null}
+            <DischargePreviewDialog
+                open={dischargeDialogOpen}
+                onOpenChange={(open) => {
+                    setDischargeDialogOpen(open);
+                    if (!open) {
+                        setDischargeItem(null);
+                    }
+                }}
+                emergency={dischargeItem}
+                dischargeAt={dischargeAt}
+                investigationsById={investigationsById}
+                operatorName={formatUserName(page?.props?.auth?.user)}
+                operatorEmail={page?.props?.auth?.user?.email ?? ''}
+                emailValue={dischargeEmail}
+                emailError={dischargeEmailError}
+                onEmailChange={setDischargeEmail}
+                onEmailError={setDischargeEmailError}
+            />
         </>
     );
 }
@@ -585,7 +658,7 @@ function SpecialistDetailsDialog({ open, onOpenChange, specialistData }: Special
 function formatStatus(status: string) {
     if (!status) return '';
     if (status === 'referto_inviato') return 'Referto inviato';
-    if (status === 'Chiusura') return 'Chiusura';
+    if (status.toLowerCase() === 'chiusura') return 'Chiusura';
     const spaced = status.replace(/_/g, ' ').trim();
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
@@ -623,6 +696,12 @@ function formatDuration(durationMs: number) {
     const minutes = Math.floor((safeDuration % 3_600_000) / 60_000);
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
 }
+
+function formatUserName(user?: SharedData['auth']['user']) {
+    if (!user) return 'Operatore pronto soccorso';
+    return `${user.name ?? ''} ${user.surname ?? ''}`.trim() || 'Operatore pronto soccorso';
+}
+
 
 function getWaitTone(item: EmergencyItem, nowMs: number) {
     const elapsedMs = (() => {

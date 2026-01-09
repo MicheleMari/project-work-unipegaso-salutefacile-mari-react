@@ -206,9 +206,6 @@ export default function Dashboard() {
                     : alert === 'giallo' || alert === 'arancio'
                       ? 'Giallo'
                       : 'Verde';
-            const normalizedStatus =
-                isPs && em.status === 'Chiusura' ? 'Emergenze in corso' : em.status;
-
             return {
                 id: em.id,
                 patientId: em.patient?.id,
@@ -216,8 +213,8 @@ export default function Dashboard() {
                 codice,
                 arrivo: em.description ?? 'Non specificato',
                 attesa: '--:--',
-                destinazione: normalizedStatus ?? 'In valutazione',
-                stato: normalizedStatus ?? 'In triage',
+                destinazione: em.status ?? 'In valutazione',
+                stato: em.status ?? 'In triage',
                 isFrom118: (em.user?.permission?.name ?? '') === 'Operatore 118',
                 specialist: em.specialist
                     ? {
@@ -230,6 +227,7 @@ export default function Dashboard() {
                           calledAt: em.specialist_called_at ?? undefined,
                       }
                     : null,
+                result: em.result ?? null,
                 createdAt:
                     em.arrived_ps && em.arrived_ps_at
                         ? em.arrived_ps_at
@@ -416,7 +414,9 @@ export default function Dashboard() {
     }, [emergenzeApi]);
 
     const areaCounts = useMemo(() => {
-        const alerts = emergenzeApi.map((e) => (e.alert_code ?? '').toLowerCase());
+        const alerts = emergenzeApi
+            .filter((e) => Boolean(e.arrived_ps))
+            .map((e) => (e.alert_code ?? '').toLowerCase());
         const shockRoom = alerts.filter((code) => code === 'rosso').length;
         const osservazione = alerts.filter((code) => code === 'giallo' || code === 'arancio').length;
         const areaVerde = alerts.filter((code) => code === 'verde' || code === 'bianco' || code === '').length;
