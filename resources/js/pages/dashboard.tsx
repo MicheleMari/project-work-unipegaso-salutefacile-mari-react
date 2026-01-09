@@ -101,6 +101,7 @@ export default function Dashboard() {
     const [specialistRequests, setSpecialistRequests] = useState<SpecialistInvestigationRequestRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const obiCapacity = 10;
 
     const handleEmergencyCreated = (emergency: CreatedEmergency) => {
         setEmergenzeApi((prev) => [
@@ -300,13 +301,22 @@ export default function Dashboard() {
         });
     };
 
+    const handleEmergencyUpdated = (payload: { id: number | string; status?: string | null }) => {
+        setEmergenzeApi((prev) =>
+            prev.map((item) =>
+                Number(item.id) === Number(payload.id) ? { ...item, status: payload.status ?? item.status } : item,
+            ),
+        );
+    };
+
     const summaryCards = useMemo(() => {
         const rossi = emergenze.filter((e) => e.codice === 'Rosso').length;
         const gialli = emergenze.filter((e) => e.codice === 'Giallo').length;
         const inDimissione = emergenzeApi.filter((e) =>
             (e.status ?? '').toLowerCase().includes('dimission'),
         ).length;
-        const postiDisponibili = Math.max(0, 10 - emergenze.length);
+        const omiCount = emergenze.filter((e) => (e.stato ?? '').toLowerCase() === 'omi').length;
+        const postiDisponibili = Math.max(0, obiCapacity - omiCount);
 
         return [
             {
@@ -346,7 +356,7 @@ export default function Dashboard() {
                 chip: 'Capienza calcolata',
             },
         ];
-    }, [emergenze]);
+    }, [emergenze, emergenzeApi, obiCapacity]);
 
     const summary118Cards = useMemo(() => {
         const visibleEmergencies = emergenzeApi.filter(
@@ -523,6 +533,7 @@ export default function Dashboard() {
                                 investigations={investigations}
                                 onInvestigationsRecorded={handleInvestigationsRecorded}
                                 onSpecialistCalled={handleSpecialistCalled}
+                                onEmergencyUpdated={handleEmergencyUpdated}
                             />
                             <ActionsCard
                                 primaryCta="Avvia triage ora"

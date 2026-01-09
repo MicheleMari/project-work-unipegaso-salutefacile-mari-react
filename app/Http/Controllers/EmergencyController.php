@@ -103,17 +103,17 @@ class EmergencyController extends Controller
     public function update(Request $request, Emergency $emergency)
     {
         $data = $request->validate([
-            'description' => 'nullable|string',
-            'alert_code' => 'nullable|in:bianco,verde,giallo,arancio,rosso',
-            'user_id' => 'required|exists:users,id',
-            'patient_id' => 'required|exists:patients,id',
-            'vital_signs' => 'nullable|array',
-            'status' => 'nullable|string|max:50',
-            'result' => 'nullable|array',
-            'sended_to_ps' => 'nullable|boolean',
-            'notify_ps' => 'nullable|boolean',
-            'arrived_ps' => 'nullable|boolean',
-            'arrived_ps_at' => 'nullable|date',
+            'description' => 'sometimes|nullable|string',
+            'alert_code' => 'sometimes|nullable|in:bianco,verde,giallo,arancio,rosso',
+            'user_id' => 'sometimes|exists:users,id',
+            'patient_id' => 'sometimes|exists:patients,id',
+            'vital_signs' => 'sometimes|nullable|array',
+            'status' => 'sometimes|nullable|string|max:50',
+            'result' => 'sometimes|nullable|array',
+            'sended_to_ps' => 'sometimes|boolean',
+            'notify_ps' => 'sometimes|boolean',
+            'arrived_ps' => 'sometimes|boolean',
+            'arrived_ps_at' => 'sometimes|nullable|date',
         ]);
 
         if (array_key_exists('arrived_ps', $data) && $data['arrived_ps'] && ! $emergency->arrived_ps_at) {

@@ -9,7 +9,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { AlertTriangle, Ambulance, Paperclip, Stethoscope } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { PatientDetailsDialog } from '@/components/dashboard/patient-details-dialog';
 import {
@@ -23,42 +22,15 @@ import { patchJson, postJson } from '@/lib/api';
 import { usePage } from '@inertiajs/react';
 import type { SharedData } from '@/types';
 import { DischargePreviewDialog } from '@/components/dashboard/discharge-preview-dialog';
-
-type EmergencyItem = {
-    id: number | string;
-    patientId?: number | string;
-    paziente: string;
-    codice: 'Rosso' | 'Giallo' | 'Verde';
-    arrivo: string;
-    attesa: string;
-    destinazione: string;
-    stato: string;
-    createdAt?: string;
-    isFrom118?: boolean;
-    performedInvestigationIds: number[];
-    performedInvestigations: InvestigationPerformed[];
-    specialist?: {
-        id: number;
-        name: string;
-        surname?: string;
-        department?: string | null;
-        avatar?: string | null;
-        isAvailable?: boolean | null;
-        calledAt?: string | undefined;
-    } | null;
-    result?: {
-        notes?: string | null;
-        disposition?: string | null;
-        needs_follow_up?: boolean | null;
-        reported_at?: string | null;
-    } | null;
-};
+import { EmergencyCardItem } from '@/components/dashboard/emergency-card-item';
+import type { EmergencyItem } from '@/components/dashboard/emergency-types';
 
 type EmergenciesCardProps = {
     items: EmergencyItem[];
     investigations: PreliminaryExam[];
     onInvestigationsRecorded?: (emergencyId: number, records: InvestigationPerformed[]) => void;
     onSpecialistCalled?: (payload: SpecialistCallResult) => void;
+    onEmergencyUpdated?: (payload: { id: number | string; status?: string | null }) => void;
     title?: string;
     description?: string;
     showInvestigationActions?: boolean;
@@ -84,6 +56,7 @@ const statusBadgeClasses: Record<string, string> = {
     'Risolto in ambulanza': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
     'Referto inviato': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
     Chiusura: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
+    'O.M.I.': 'bg-purple-500/15 text-purple-800 dark:text-purple-100',
 };
 
 export function EmergenciesCard({
@@ -91,6 +64,7 @@ export function EmergenciesCard({
     investigations,
     onInvestigationsRecorded,
     onSpecialistCalled,
+    onEmergencyUpdated,
     title = 'Emergenze in corso',
     description = 'Monitoraggio arrivi, codice colore e destinazioni',
     showInvestigationActions = true,
@@ -119,8 +93,13 @@ export function EmergenciesCard({
     const [dischargeAt, setDischargeAt] = useState<string>('');
     const [dischargeEmail, setDischargeEmail] = useState('');
     const [dischargeEmailError, setDischargeEmailError] = useState<string | null>(null);
+    const [omiUpdatingId, setOmiUpdatingId] = useState<number | null>(null);
+    const [omiError, setOmiError] = useState<string | null>(null);
 
-    const isClosing = (item: EmergencyItem) => (item.stato ?? '').toLowerCase() === 'chiusura';
+    const isOmi = (item: EmergencyItem) =>
+        (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'omi';
+    const isClosing = (item: EmergencyItem) =>
+        (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'chiusura' || isOmi(item);
 
     useEffect(() => {
         const interval = window.setInterval(() => setNow(Date.now()), 1000);
@@ -142,14 +121,14 @@ export function EmergenciesCard({
         return formatDuration(avg);
     }, [items, now]);
 
-    const getDisplayStatus = (item: EmergencyItem) =>
-        item.stato?.toLowerCase() === 'chiusura'
-            ? 'Chiusura'
-            : item.specialist?.id
-                ? 'Specialista chiamato'
-                : item.performedInvestigationIds.length > 0
-                    ? 'Accertamenti preliminari in corso'
-                    : item.stato;
+    const getDisplayStatus = (item: EmergencyItem) => {
+        const normalized = (item.stato ?? '').replace(/\./g, '').toLowerCase();
+        if (normalized === 'chiusura') return 'Chiusura';
+        if (normalized === 'omi') return 'omi';
+        if (item.specialist?.id) return 'Specialista chiamato';
+        if (item.performedInvestigationIds.length > 0) return 'Accertamenti preliminari in corso';
+        return item.stato;
+    };
 
     const codiceOptions = useMemo(
         () => Array.from(new Set(items.map((item) => item.codice))) as EmergencyItem['codice'][],
@@ -234,6 +213,32 @@ export function EmergenciesCard({
         setDischargeEmail('');
         setDischargeEmailError(null);
         setDischargeDialogOpen(true);
+    };
+
+    const handleSetOmi = async (item: EmergencyItem) => {
+        const emergencyId = Number(item.id);
+        if (Number.isNaN(emergencyId)) {
+            setOmiError('Identificativo emergenza non valido');
+            return;
+        }
+
+        setOmiUpdatingId(emergencyId);
+        setOmiError(null);
+        try {
+            const updated = await patchJson<{ id: number | string; status?: string | null }>(
+                `/api/emergencies/${emergencyId}`,
+                { status: 'omi' },
+            );
+            const updatedStatus = updated.status ?? 'omi';
+            onEmergencyUpdated?.({ id: updated.id ?? emergencyId, status: updatedStatus });
+            setSelected((prev) =>
+                prev && Number(prev.id) === emergencyId ? { ...prev, stato: updatedStatus } : prev,
+            );
+        } catch (err) {
+            setOmiError(err instanceof Error ? err.message : 'Errore durante l aggiornamento');
+        } finally {
+            setOmiUpdatingId(null);
+        }
     };
 
     const handleConfirmInvestigations = async (examIds: string[]) => {
@@ -381,121 +386,36 @@ export function EmergenciesCard({
                         onStatusChange={setStatusFilter}
                         onWaitChange={setWaitFilter}
                     />
+                    {omiError ? <p className="text-xs font-medium text-red-600">{omiError}</p> : null}
 
                     {filteredItems.length === 0 ? (
                         <p className="text-sm text-muted-foreground">Nessuna emergenza presente</p>
                     ) : (
                         filteredItems.map((item) => {
                             const waitTone = getWaitTone(item, now);
+                            const displayStatus = formatStatus(getDisplayStatus(item));
                             return (
-                                <div
+                                <EmergencyCardItem
                                     key={item.id}
-                                    className="flex flex-col gap-2 rounded-lg border border-border/70 bg-background/70 p-3 shadow-xs md:flex-row md:items-center md:justify-between"
-                                >
-                                    <div className="flex items-start gap-3">
-                                        <Badge
-                                            variant="outline"
-                                            className={codiceBadgeClasses[item.codice]}
-                                        >
-                                            {item.codice}
-                                        </Badge>
-                                    <div className="space-y-1">
-                                        <button
-                                            type="button"
-                                            className="flex items-center gap-2 text-sm font-semibold leading-tight text-left underline-offset-4 hover:underline"
-                                            onClick={() => openPatientDetails(item.patientId, item.paziente)}
-                                        >
-                                            {item.isFrom118 ? (
-                                                <Ambulance className="size-4 text-blue-600 dark:text-blue-200" />
-                                            ) : null}
-                                            {item.paziente}
-                                        </button>
-                                        <p className="text-xs text-muted-foreground">{item.arrivo}</p>
-                                        {item.stato === 'risolto_in_ambulanza' ? null : (
-                                            <div
-                                                className={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-[11px] font-semibold ${waitTone.className}`}
-                                            >
-                                                {waitTone.icon === 'alert' ? (
-                                                    <AlertTriangle className="size-3.5" />
-                                                ) : (
-                                                    <Ambulance className="size-3.5" />
-                                                )}
-                                                <span>Attesa {formatElapsed(item.createdAt, now)}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                    <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
-                                        <span
-                                            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${
-                                                statusBadgeClasses[formatStatus(getDisplayStatus(item))] ??
-                                                'bg-muted text-muted-foreground'
-                                            }`}
-                                        >
-                                            <Stethoscope className="size-3.5" />
-                                            {formatStatus(getDisplayStatus(item))}
-                                        </span>
-                                        {showInvestigationActions && !isClosing(item) ? (
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="mt-1 font-medium"
-                                                onClick={() => handleOpenFlow(item)}
-                                            >
-                                                <Stethoscope className="mr-2 size-4" aria-hidden="true" />
-                                                Richiesta accertamenti preliminari
-                                            </Button>
-                                        ) : null}
-                                        {showInvestigationActions &&
-                                        item.performedInvestigationIds.length > 0 &&
-                                        !isClosing(item) ? (
-                                            <Button
-                                                variant="link"
-                                                size="sm"
-                                                className="px-0 text-emerald-700 hover:text-emerald-600 dark:text-emerald-200"
-                                                onClick={() => handleOpenStatus(item)}
-                                            >
-                                                Visualizza stato accertamenti
-                                            </Button>
-                                        ) : null}
-                                        {showSpecialistActions && item.specialist && !isClosing(item) ? (
-                                            <Button
-                                                variant="link"
-                                                size="sm"
-                                                className="px-0 text-blue-700 hover:text-blue-600 dark:text-blue-200"
-                                                onClick={() => openSpecialistDetails(item)}
-                                            >
-                                                Visualizza specialista chiamato
-                                            </Button>
-                                        ) : null}
-                                        {isClosing(item) ? (
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="border-emerald-200 bg-emerald-500/10 text-emerald-800 hover:bg-emerald-500/15 dark:border-emerald-800 dark:text-emerald-100"
-                                                    onClick={() => openDischargePreview(item)}
-                                                >
-                                                    Dimetti
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="border-purple-200 bg-purple-500/10 text-purple-800 hover:bg-purple-500/15 dark:border-purple-800 dark:text-purple-100"
-                                                >
-                                                    O.M.I.
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="border-red-200 bg-red-500/10 text-red-800 hover:bg-red-500/15 dark:border-red-900 dark:text-red-100"
-                                                >
-                                                    Ricovera
-                                                </Button>
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                </div>
+                                    item={item}
+                                    codiceClassName={codiceBadgeClasses[item.codice]}
+                                    statusClassName={statusBadgeClasses[displayStatus] ?? ''}
+                                    displayStatus={displayStatus}
+                                    waitElapsed={formatElapsed(item.createdAt, now)}
+                                    waitTone={waitTone}
+                                    showInvestigationActions={showInvestigationActions}
+                                    allowInvestigationActions={showInvestigationActions && (!isClosing(item) || isOmi(item))}
+                                    showSpecialistActions={showSpecialistActions}
+                                    isClosing={isClosing(item)}
+                                    showOmiAction={(item.stato ?? '').replace(/\./g, '').toLowerCase() !== 'omi'}
+                                    omiLoading={omiUpdatingId === Number(item.id)}
+                                    onOpenPatientDetails={openPatientDetails}
+                                    onOpenFlow={handleOpenFlow}
+                                    onOpenStatus={handleOpenStatus}
+                                    onOpenSpecialist={openSpecialistDetails}
+                                    onOpenDischarge={openDischargePreview}
+                                    onSetOmi={handleSetOmi}
+                                />
                             );
                         })
                     )}
@@ -658,7 +578,9 @@ function SpecialistDetailsDialog({ open, onOpenChange, specialistData }: Special
 function formatStatus(status: string) {
     if (!status) return '';
     if (status === 'referto_inviato') return 'Referto inviato';
-    if (status.toLowerCase() === 'chiusura') return 'Chiusura';
+    const normalized = status.replace(/\./g, '').toLowerCase();
+    if (normalized === 'chiusura') return 'Chiusura';
+    if (normalized === 'omi') return 'O.M.I.';
     const spaced = status.replace(/_/g, ' ').trim();
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }

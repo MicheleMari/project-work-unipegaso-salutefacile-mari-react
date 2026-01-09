@@ -36,6 +36,8 @@ const statusFilterClasses: Record<string, string> = {
         'border-emerald-200 bg-emerald-500/15 text-emerald-800 dark:border-emerald-800 dark:text-emerald-100',
     Chiusura:
         'border-emerald-200 bg-emerald-500/15 text-emerald-800 dark:border-emerald-800 dark:text-emerald-100',
+    'O.M.I.':
+        'border-purple-200 bg-purple-500/15 text-purple-800 dark:border-purple-800 dark:text-purple-100',
 };
 
 const statusActiveRing: Record<string, string> = {
@@ -48,6 +50,7 @@ const statusActiveRing: Record<string, string> = {
     'Specialista chiamato': 'ring-blue-400/70',
     'Referto inviato': 'ring-emerald-400/70',
     Chiusura: 'ring-emerald-400/70',
+    'O.M.I.': 'ring-purple-400/70',
 };
 
 const waitFilterOptions = [

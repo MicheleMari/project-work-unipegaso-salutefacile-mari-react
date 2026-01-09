@@ -530,12 +530,16 @@ export function InvestigationStatusDialog({
                         </div>
                     )}
                 </div>
-                {allOutcomesProvided ? (
+                {allOutcomesProvided || onAdvancedInvestigationsSelect ? (
                     <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
-                        <Button variant="outline" onClick={() => setSpecialistDialogOpen(true)}>
-                            Chiama Specialista
-                        </Button>
-                        <Button onClick={() => setAdvancedDialogOpen(true)}>Accertamenti Approfonditi</Button>
+                        {allOutcomesProvided ? (
+                            <Button variant="outline" onClick={() => setSpecialistDialogOpen(true)}>
+                                Chiama Specialista
+                            </Button>
+                        ) : null}
+                        {onAdvancedInvestigationsSelect ? (
+                            <Button onClick={() => setAdvancedDialogOpen(true)}>Accertamenti Approfonditi</Button>
+                        ) : null}
                     </div>
                 ) : null}
             </DialogContent>
