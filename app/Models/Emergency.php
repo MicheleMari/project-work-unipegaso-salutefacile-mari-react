@@ -18,6 +18,8 @@ class Emergency extends Model
         'patient_id',
         'vital_signs',
         'status',
+        'result',
+        'sended_to_ps',
         'notify_ps',
         'arrived_ps',
         'arrived_ps_at',
@@ -27,6 +29,8 @@ class Emergency extends Model
 
     protected $casts = [
         'vital_signs' => 'array',
+        'result' => 'array',
+        'sended_to_ps' => 'boolean',
         'specialist_called_at' => 'datetime',
         'notify_ps' => 'boolean',
         'arrived_ps' => 'boolean',

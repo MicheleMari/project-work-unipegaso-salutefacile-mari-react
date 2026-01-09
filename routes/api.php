@@ -27,4 +27,5 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('triage-suggest', TriageSuggestController::class);
     Route::post('emergencies/{emergency}/call-specialist', [EmergencyController::class, 'callSpecialist']);
     Route::post('emergencies/{emergency}/remind-specialist', [EmergencyController::class, 'remindSpecialist']);
+    Route::post('emergencies/{emergency}/specialist-report', [EmergencyController::class, 'specialistReport']);
 });

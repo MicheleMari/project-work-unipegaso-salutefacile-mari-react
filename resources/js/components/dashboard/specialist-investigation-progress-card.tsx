@@ -196,6 +196,7 @@ function formatPatientName(patient: SpecialistInvestigationPatient | null | unde
 }
 
 function formatStatus(status: string) {
+    if (status === 'requested') return 'Richiesto';
     const spaced = status.replace(/_/g, ' ').trim();
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }

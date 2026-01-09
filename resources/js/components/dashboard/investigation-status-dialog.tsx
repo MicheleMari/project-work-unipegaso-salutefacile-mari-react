@@ -581,6 +581,7 @@ export function InvestigationStatusDialog({
 
 function formatStatus(status: string) {
     if (!status) return '';
+    if (status === 'requested') return 'Richiesto';
     const spaced = status.replace(/_/g, ' ').trim();
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }

@@ -10,7 +10,17 @@ class SpecialistVisitController extends Controller
 {
     public function index()
     {
-        return SpecialistVisit::with(['patient', 'department', 'user', 'emergency'])->get();
+        $user = request()->user();
+        if ($user) {
+            $user->loadMissing('permission');
+        }
+
+        return SpecialistVisit::with(['patient', 'department', 'user', 'emergency'])
+            ->when(
+                $user?->permission?->name === 'Specialista',
+                fn ($query) => $query->where('user_id', $user->id),
+            )
+            ->get();
     }
 
     public function store(Request $request)
@@ -34,11 +44,27 @@ class SpecialistVisitController extends Controller
 
     public function show(SpecialistVisit $specialistVisit)
     {
+        $user = request()->user();
+        if ($user) {
+            $user->loadMissing('permission');
+        }
+        if ($user?->permission?->name === 'Specialista' && $specialistVisit->user_id !== $user->id) {
+            return response()->json(['message' => 'Visita non assegnata'], Response::HTTP_FORBIDDEN);
+        }
+
         return $specialistVisit->load(['patient', 'department', 'user', 'emergency']);
     }
 
     public function update(Request $request, SpecialistVisit $specialistVisit)
     {
+        $user = $request->user();
+        if ($user) {
+            $user->loadMissing('permission');
+        }
+        if ($user?->permission?->name === 'Specialista' && $specialistVisit->user_id !== $user->id) {
+            return response()->json(['message' => 'Visita non assegnata'], Response::HTTP_FORBIDDEN);
+        }
+
         $data = $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'department_id' => 'required|exists:departments,id',

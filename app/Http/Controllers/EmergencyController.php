@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Emergency;
+use App\Models\SpecialistVisit;
 use App\Models\User;
 use App\Notifications\SpecialistCalledNotification;
 use App\Notifications\SpecialistReminderNotification;
@@ -30,6 +31,8 @@ class EmergencyController extends Controller
                 'user_id',
                 'specialist_id',
                 'status',
+                'result',
+                'sended_to_ps',
                 'notify_ps',
                 'arrived_ps',
                 'arrived_ps_at',
@@ -47,6 +50,10 @@ class EmergencyController extends Controller
                 $user?->permission?->name === 'Operatore 118',
                 fn ($query) => $query->where('user_id', $user->id),
             )
+            ->when(
+                $user?->permission?->name === 'Specialista',
+                fn ($query) => $query->where('specialist_id', $user->id),
+            )
             ->orderByDesc('created_at')
             ->limit($limit)
             ->get();
@@ -61,6 +68,8 @@ class EmergencyController extends Controller
             'patient_id' => 'required|exists:patients,id',
             'vital_signs' => 'nullable|array',
             'status' => 'nullable|string|max:50',
+            'result' => 'nullable|array',
+            'sended_to_ps' => 'nullable|boolean',
             'notify_ps' => 'nullable|boolean',
             'arrived_ps' => 'nullable|boolean',
             'arrived_ps_at' => 'nullable|date',
@@ -73,6 +82,9 @@ class EmergencyController extends Controller
         if ($user?->permission?->name === 'Operatore 118') {
             $data['user_id'] = $user->id;
             $data['arrived_ps'] = $data['arrived_ps'] ?? false;
+            if (array_key_exists('notify_ps', $data) && $data['notify_ps'] === false) {
+                $data['status'] = 'risolto_in_ambulanza';
+            }
         }
         if ($user?->permission?->name === 'Operatore PS') {
             $data['notify_ps'] = false;
@@ -97,6 +109,8 @@ class EmergencyController extends Controller
             'patient_id' => 'required|exists:patients,id',
             'vital_signs' => 'nullable|array',
             'status' => 'nullable|string|max:50',
+            'result' => 'nullable|array',
+            'sended_to_ps' => 'nullable|boolean',
             'notify_ps' => 'nullable|boolean',
             'arrived_ps' => 'nullable|boolean',
             'arrived_ps_at' => 'nullable|date',
@@ -166,5 +180,79 @@ class EmergencyController extends Controller
         $specialist->notify(new SpecialistReminderNotification($emergency, $data['message'] ?? null));
 
         return response()->json(['status' => 'reminded'], Response::HTTP_OK);
+    }
+
+    public function specialistReport(Request $request, Emergency $emergency)
+    {
+        $data = $request->validate([
+            'notes' => 'required|string',
+            'disposition' => 'nullable|string|max:60',
+            'needs_follow_up' => 'nullable|boolean',
+            'send_to_ps' => 'nullable|boolean',
+        ]);
+
+        $user = $request->user();
+        if ($user) {
+            $user->loadMissing('permission');
+        }
+        if (! $user || $user->permission?->name !== 'Specialista') {
+            return response()->json(['message' => 'Utente non autorizzato'], Response::HTTP_FORBIDDEN);
+        }
+        if ($emergency->specialist_id !== $user->id) {
+            return response()->json(['message' => 'Emergenza non assegnata'], Response::HTTP_FORBIDDEN);
+        }
+        if (! $user->department_id) {
+            return response()->json(['message' => 'Reparto non associato allo specialista'], Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        $visit = SpecialistVisit::firstOrCreate(
+            [
+                'emergency_id' => $emergency->id,
+                'user_id' => $user->id,
+            ],
+            [
+                'patient_id' => $emergency->patient_id,
+                'department_id' => $user->department_id,
+                'status' => 'in_progress',
+            ],
+        );
+
+        $resultPayload = [
+            'notes' => $data['notes'],
+            'disposition' => $data['disposition'] ?? null,
+            'needs_follow_up' => $data['needs_follow_up'] ?? false,
+            'reported_at' => now()->toISOString(),
+        ];
+
+        $visit->update([
+            'status' => 'completed',
+            'report_received_at' => now(),
+            'needs_follow_up' => $data['needs_follow_up'] ?? false,
+            'disposition' => $data['disposition'] ?? null,
+            'notes' => $data['notes'],
+        ]);
+
+        $emergency->update([
+            'result' => $resultPayload,
+            'sended_to_ps' => ! empty($data['send_to_ps']),
+        ]);
+
+        if (! empty($data['send_to_ps'])) {
+            $emergency->update([
+                'status' => 'chiusura',
+            ]);
+            if ($user->is_available === false) {
+                $user->forceFill(['is_available' => true])->save();
+            }
+        }
+
+        return response()->json([
+            'emergency' => $emergency->fresh([
+                'patient:id,name,surname',
+                'specialist:id,name,surname,department_id,avatar_path,is_available',
+                'specialist.department:id,name',
+            ]),
+            'visit' => $visit->fresh(['patient', 'department', 'user', 'emergency']),
+        ]);
     }
 }

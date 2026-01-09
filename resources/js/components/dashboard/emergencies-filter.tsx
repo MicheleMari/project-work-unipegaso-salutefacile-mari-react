@@ -19,26 +19,35 @@ const codiceActiveRing: Record<Code, string> = {
 };
 
 const statusFilterClasses: Record<string, string> = {
-    'In triage': 'border-blue-200 bg-blue-500/10 text-blue-700 dark:border-blue-900/60 dark:text-blue-200',
+    'In triage': 'border-sky-200 bg-sky-500/10 text-sky-700 dark:border-sky-900/60 dark:text-sky-200',
     'In valutazione':
         'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/60 dark:text-amber-200',
     'Dimesso':
         'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-200',
     'In trattamento':
         'border-purple-200 bg-purple-500/10 text-purple-700 dark:border-purple-900/60 dark:text-purple-200',
+    'Emergenze in corso':
+        'border-blue-200 bg-blue-500/10 text-blue-700 dark:border-blue-900/60 dark:text-blue-200',
     'Accertamenti preliminari in corso':
         'border-emerald-300 bg-emerald-500/15 text-emerald-800 dark:border-emerald-800 dark:text-emerald-100',
     'Specialista chiamato':
         'border-blue-200 bg-blue-500/15 text-blue-800 dark:border-blue-800 dark:text-blue-100',
+    'Referto inviato':
+        'border-emerald-200 bg-emerald-500/15 text-emerald-800 dark:border-emerald-800 dark:text-emerald-100',
+    Chiusura:
+        'border-emerald-200 bg-emerald-500/15 text-emerald-800 dark:border-emerald-800 dark:text-emerald-100',
 };
 
 const statusActiveRing: Record<string, string> = {
-    'In triage': 'ring-blue-400/70',
+    'In triage': 'ring-sky-400/70',
     'In valutazione': 'ring-amber-400/70',
     'Dimesso': 'ring-emerald-400/70',
     'In trattamento': 'ring-purple-400/70',
+    'Emergenze in corso': 'ring-blue-400/70',
     'Accertamenti preliminari in corso': 'ring-emerald-400/70',
     'Specialista chiamato': 'ring-blue-400/70',
+    'Referto inviato': 'ring-emerald-400/70',
+    Chiusura: 'ring-emerald-400/70',
 };
 
 const waitFilterOptions = [

@@ -2,6 +2,7 @@ import { ActionsCard, type CreatedEmergency } from '@/components/dashboard/actio
 import { EmergenciesCard } from '@/components/dashboard/emergencies-card';
 import { InvestigationProgressCard } from '@/components/dashboard/investigation-progress-card';
 import { FlowCard } from '@/components/dashboard/flow-card';
+import { SpecialistEmergenciesCard } from '@/components/dashboard/specialist-emergencies-card';
 import {
     SpecialistInvestigationStatusCard,
     type SpecialistInvestigationRequestRecord,
@@ -14,7 +15,7 @@ import { apiRequest, patchJson } from '@/lib/api';
 import { dashboard } from '@/routes';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
-import { Activity, AlertTriangle, Ambulance, BellRing, ShieldCheck } from 'lucide-react';
+import { Activity, AlertTriangle, Ambulance, BellRing, ClipboardCheck, Send, ShieldCheck } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -47,6 +48,8 @@ type ApiEmergency = {
     description?: string | null;
     alert_code?: string | null;
     status?: string | null;
+    result?: Record<string, unknown> | null;
+    sended_to_ps?: boolean | null;
     notify_ps?: boolean | null;
     arrived_ps?: boolean | null;
     arrived_ps_at?: string | null;
@@ -88,6 +91,7 @@ export default function Dashboard() {
     const currentUser = page?.props?.auth?.user;
     const is118 = currentUser?.permission?.name === 'Operatore 118';
     const isPs = currentUser?.permission?.name === 'Operatore PS';
+    const isSpecialist = currentUser?.permission?.name === 'Specialista';
     const [operativeActions] = useState(operativeActionsInitial);
     const [emergenzeApi, setEmergenzeApi] = useState<ApiEmergency[]>([]);
     const [investigations, setInvestigations] = useState<ApiInvestigation[]>([]);
@@ -139,6 +143,14 @@ export default function Dashboard() {
                         setInvestigationsPerformed({});
                         setSpecialistRequests([]);
                     }
+                } else if (isSpecialist) {
+                    const emergencies = await apiRequest<ApiEmergency[]>('/api/emergencies?limit=50');
+                    if (active) {
+                        setEmergenzeApi(emergencies);
+                        setInvestigations([]);
+                        setInvestigationsPerformed({});
+                        setSpecialistRequests([]);
+                    }
                 } else {
                     const [emergencies, investigationsData, investigationsPerformedData, specialistRequestsData] =
                         await Promise.all([
@@ -178,7 +190,7 @@ export default function Dashboard() {
         return () => {
             active = false;
         };
-    }, [is118]);
+    }, [is118, isSpecialist]);
 
     const emergenze = useMemo(() => {
         const visibleEmergencies = is118
@@ -194,6 +206,8 @@ export default function Dashboard() {
                     : alert === 'giallo' || alert === 'arancio'
                       ? 'Giallo'
                       : 'Verde';
+            const normalizedStatus =
+                isPs && em.status === 'Chiusura' ? 'Emergenze in corso' : em.status;
 
             return {
                 id: em.id,
@@ -202,8 +216,8 @@ export default function Dashboard() {
                 codice,
                 arrivo: em.description ?? 'Non specificato',
                 attesa: '--:--',
-                destinazione: em.status ?? 'In valutazione',
-                stato: em.status ?? 'In triage',
+                destinazione: normalizedStatus ?? 'In valutazione',
+                stato: normalizedStatus ?? 'In triage',
                 isFrom118: (em.user?.permission?.name ?? '') === 'Operatore 118',
                 specialist: em.specialist
                     ? {
@@ -365,6 +379,42 @@ export default function Dashboard() {
         ];
     }, [currentUser?.id, emergenzeApi]);
 
+    const specialistSummaryCards = useMemo(() => {
+        const totalAssigned = emergenzeApi.length;
+        const sentReports = emergenzeApi.filter((e) => e.status === 'Chiusura').length;
+        const pendingReports = totalAssigned - sentReports;
+
+        return [
+            {
+                label: 'Emergenze assegnate',
+                value: `${totalAssigned} casi`,
+                delta: '',
+                icon: ClipboardCheck,
+                accentClassName:
+                    'bg-blue-500/10 text-blue-700 border-blue-200 dark:border-blue-900/40 dark:text-blue-200',
+                chip: 'Carico specialistico attivo',
+            },
+            {
+                label: 'Referti in attesa',
+                value: `${pendingReports} casi`,
+                delta: '',
+                icon: Activity,
+                accentClassName:
+                    'bg-amber-500/10 text-amber-700 border-amber-200 dark:border-amber-900/40 dark:text-amber-200',
+                chip: 'Da completare',
+            },
+            {
+                label: 'Referti inviati',
+                value: `${sentReports} casi`,
+                delta: '',
+                icon: Send,
+                accentClassName:
+                    'bg-emerald-500/10 text-emerald-700 border-emerald-200 dark:border-emerald-900/40 dark:text-emerald-200',
+                chip: 'Trasmissione al PS',
+            },
+        ];
+    }, [emergenzeApi]);
+
     const areaCounts = useMemo(() => {
         const alerts = emergenzeApi.map((e) => (e.alert_code ?? '').toLowerCase());
         const shockRoom = alerts.filter((code) => code === 'rosso').length;
@@ -446,6 +496,20 @@ export default function Dashboard() {
                                 enableDisposition
                                 defaultNotifyPs={false}
                                 defaultArrivedPs={false}
+                            />
+                        </div>
+                    </>
+                ) : isSpecialist ? (
+                    <>
+                        <SummaryGrid items={specialistSummaryCards} />
+                        <div className="grid gap-4 xl:grid-cols-3">
+                            <SpecialistEmergenciesCard
+                                items={emergenzeApi}
+                                onEmergencyUpdated={(updated) =>
+                                    setEmergenzeApi((prev) =>
+                                        prev.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)),
+                                    )
+                                }
                             />
                         </div>
                     </>

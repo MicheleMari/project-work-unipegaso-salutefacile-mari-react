@@ -66,6 +66,19 @@ const codiceBadgeClasses: Record<EmergencyItem['codice'], string> = {
         'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/50 dark:text-emerald-200',
 };
 
+const statusBadgeClasses: Record<string, string> = {
+    'In triage': 'bg-sky-500/10 text-sky-700 dark:text-sky-200',
+    'In valutazione': 'bg-amber-500/10 text-amber-700 dark:text-amber-200',
+    'Dimesso': 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-200',
+    'In trattamento': 'bg-purple-500/10 text-purple-700 dark:text-purple-200',
+    'Emergenze in corso': 'bg-blue-500/10 text-blue-700 dark:text-blue-200',
+    'Accertamenti preliminari in corso': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
+    'Specialista chiamato': 'bg-blue-500/15 text-blue-800 dark:text-blue-100',
+    'Risolto in ambulanza': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
+    'Referto inviato': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
+    Chiusura: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
+};
+
 export function EmergenciesCard({
     items,
     investigations,
@@ -359,18 +372,19 @@ export function EmergenciesCard({
                                         >
                                             {item.codice}
                                         </Badge>
-                                        <div className="space-y-1">
-                                            <button
-                                                type="button"
-                                                className="flex items-center gap-2 text-sm font-semibold leading-tight text-left underline-offset-4 hover:underline"
-                                                onClick={() => openPatientDetails(item.patientId, item.paziente)}
-                                            >
-                                                {item.isFrom118 ? (
-                                                    <Ambulance className="size-4 text-blue-600 dark:text-blue-200" />
-                                                ) : null}
-                                                {item.paziente}
-                                            </button>
-                                            <p className="text-xs text-muted-foreground">{item.arrivo}</p>
+                                    <div className="space-y-1">
+                                        <button
+                                            type="button"
+                                            className="flex items-center gap-2 text-sm font-semibold leading-tight text-left underline-offset-4 hover:underline"
+                                            onClick={() => openPatientDetails(item.patientId, item.paziente)}
+                                        >
+                                            {item.isFrom118 ? (
+                                                <Ambulance className="size-4 text-blue-600 dark:text-blue-200" />
+                                            ) : null}
+                                            {item.paziente}
+                                        </button>
+                                        <p className="text-xs text-muted-foreground">{item.arrivo}</p>
+                                        {item.stato === 'risolto_in_ambulanza' ? null : (
                                             <div
                                                 className={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-[11px] font-semibold ${waitTone.className}`}
                                             >
@@ -381,10 +395,16 @@ export function EmergenciesCard({
                                                 )}
                                                 <span>Attesa {formatElapsed(item.createdAt, now)}</span>
                                             </div>
-                                        </div>
+                                        )}
                                     </div>
+                                </div>
                                     <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
-                                        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-200">
+                                        <span
+                                            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${
+                                                statusBadgeClasses[formatStatus(getDisplayStatus(item))] ??
+                                                'bg-muted text-muted-foreground'
+                                            }`}
+                                        >
                                             <Stethoscope className="size-3.5" />
                                             {formatStatus(getDisplayStatus(item))}
                                         </span>
@@ -564,6 +584,8 @@ function SpecialistDetailsDialog({ open, onOpenChange, specialistData }: Special
 
 function formatStatus(status: string) {
     if (!status) return '';
+    if (status === 'referto_inviato') return 'Referto inviato';
+    if (status === 'Chiusura') return 'Chiusura';
     const spaced = status.replace(/_/g, ' ').trim();
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
