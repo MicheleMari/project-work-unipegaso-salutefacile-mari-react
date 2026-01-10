@@ -109,9 +109,15 @@ export function EmergenciesCard({
     const [admissionEmailError, setAdmissionEmailError] = useState<string | null>(null);
     const [omiUpdatingId, setOmiUpdatingId] = useState<number | null>(null);
     const [omiError, setOmiError] = useState<string | null>(null);
+    const [ricoveriDialogOpen, setRicoveriDialogOpen] = useState(false);
+    const [dimissioniDialogOpen, setDimissioniDialogOpen] = useState(false);
 
     const isOmi = (item: EmergencyItem) =>
         (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'obi';
+    const isRicovero = (item: EmergencyItem) =>
+        (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'ricovero';
+    const isDimissione = (item: EmergencyItem) =>
+        (item.stato ?? '').replace(/\./g, '').toLowerCase().includes('dimission');
     const isClosing = (item: EmergencyItem) =>
         (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'chiusura' || isOmi(item);
 
@@ -174,6 +180,8 @@ export function EmergenciesCard({
             ),
         [items, codeFilter, statusFilter, waitFilter, now],
     );
+    const ricoveriItems = useMemo(() => items.filter(isRicovero), [items]);
+    const dimissioniItems = useMemo(() => items.filter(isDimissione), [items]);
 
     const openPatientDetails = (patientId?: number | string, patientName?: string) => {
         setPatientDialogId(patientId);
@@ -390,18 +398,30 @@ export function EmergenciesCard({
                         <CardTitle>{title}</CardTitle>
                         <CardDescription>{description}</CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setRicoveriDialogOpen(true)}
+                        >
+                            Ricoveri
+                        </Button>
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setDimissioniDialogOpen(true)}
+                        >
+                            Dimissioni
+                        </Button>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
                         <Badge
                             variant="outline"
                             className="border-blue-200 bg-blue-500/10 text-blue-700 dark:border-blue-900/50 dark:text-blue-200"
                         >
                             Tempo medio triage {averageTriageTime}
-                        </Badge>
-                        <Badge
-                            variant="outline"
-                            className="border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/50 dark:text-emerald-200"
-                        >
-                            Monitor continuo
                         </Badge>
                     </div>
                 </CardHeader>
@@ -545,7 +565,68 @@ export function EmergenciesCard({
                 onEmailError={setAdmissionEmailError}
                 onEmergencyUpdated={handleAdmissionUpdated}
             />
+            <StatusListDialog
+                open={ricoveriDialogOpen}
+                onOpenChange={setRicoveriDialogOpen}
+                title="Ricoveri"
+                items={ricoveriItems}
+            />
+            <StatusListDialog
+                open={dimissioniDialogOpen}
+                onOpenChange={setDimissioniDialogOpen}
+                title="Dimissioni"
+                items={dimissioniItems}
+            />
         </>
+    );
+}
+
+function StatusListDialog({
+    open,
+    onOpenChange,
+    title,
+    items,
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    title: string;
+    items: EmergencyItem[];
+}) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                </DialogHeader>
+                <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1">
+                    {items.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Nessuna emergenza presente.</p>
+                    ) : (
+                        items.map((item) => (
+                            <div
+                                key={item.id}
+                                className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border/70 bg-background/70 px-3 py-2"
+                            >
+                                <div className="space-y-1">
+                                    <p className="text-sm font-semibold">{item.paziente}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {item.arrivo || 'Motivo accesso non indicato'}
+                                    </p>
+                                    {item.admissionDepartment ? (
+                                        <p className="text-xs text-muted-foreground">
+                                            Reparto: {item.admissionDepartment}
+                                        </p>
+                                    ) : null}
+                                </div>
+                                <Badge variant="outline" className={codiceBadgeClasses[item.codice]}>
+                                    {item.codice}
+                                </Badge>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }
 
