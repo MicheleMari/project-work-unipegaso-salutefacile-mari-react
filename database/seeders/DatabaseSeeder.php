@@ -103,7 +103,7 @@ class DatabaseSeeder extends Seeder
 
         DB::table('investigations')->upsert([
             ['title' => 'ECG', 'description' => 'Elettrocardiogramma a 12 derivazioni', 'created_at' => $now, 'updated_at' => $now],
-            ['title' => 'Stick Urine', 'description' => 'Analisi rapida urine', 'created_at' => $now, 'updated_at' => $now],
+            ['title' => 'Urinocoltura', 'description' => 'Analisi rapida urine', 'created_at' => $now, 'updated_at' => $now],
             ['title' => 'Emogas (EGA)', 'description' => 'Emogasanalisi arteriosa', 'created_at' => $now, 'updated_at' => $now],
             ['title' => 'Prelievo Ematico', 'description' => 'Prelievo per esami ematochimici', 'created_at' => $now, 'updated_at' => $now],
             ['title' => 'Tampone Covid', 'description' => 'Test antigenico rapido', 'created_at' => $now, 'updated_at' => $now],
