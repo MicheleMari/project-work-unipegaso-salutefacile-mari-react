@@ -24,13 +24,25 @@ const statusBadgeClasses: Record<string, string> = {
     'In valutazione': 'bg-amber-500/10 text-amber-700 dark:text-amber-200',
 };
 
+const normalizeStatus = (status?: string | null) =>
+    (status ?? '').replace(/\./g, '').toLowerCase();
+
+const isArchivedStatus = (status?: string | null) => {
+    const normalized = normalizeStatus(status);
+    return (
+        normalized === 'chiusura' ||
+        normalized === 'ricovero' ||
+        normalized.includes('dimissione')
+    );
+};
+
 export function SpecialistEmergenciesCard({ items, onEmergencyUpdated }: SpecialistEmergenciesCardProps) {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selected, setSelected] = useState<SpecialistEmergency | null>(null);
     const [archiveOpen, setArchiveOpen] = useState(false);
 
     const activeItems = useMemo(
-        () => items.filter((item) => item.status !== 'Chiusura'),
+        () => items.filter((item) => !isArchivedStatus(item.status)),
         [items],
     );
 
@@ -49,7 +61,7 @@ export function SpecialistEmergenciesCard({ items, onEmergencyUpdated }: Special
     const archivedItems = useMemo(
         () =>
             items
-                .filter((item) => item.status === 'Chiusura')
+                .filter((item) => isArchivedStatus(item.status))
                 .slice()
                 .sort((a, b) => {
                     const aTime = a.specialist_called_at ? new Date(a.specialist_called_at).getTime() : 0;

@@ -9,6 +9,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { InvestigationPerformed } from '@/components/dashboard/investigation-cards/types';
+import { patchJson } from '@/lib/api';
+import { useState } from 'react';
 
 type DischargeEmergency = {
     id: number | string;
@@ -16,6 +18,7 @@ type DischargeEmergency = {
     codice: 'Bianco' | 'Verde' | 'Giallo' | 'Arancio' | 'Rosso';
     arrivo: string;
     createdAt?: string;
+    closedAt?: string;
     performedInvestigations: InvestigationPerformed[];
     specialist?: {
         id: number;
@@ -43,6 +46,11 @@ type DischargePreviewDialogProps = {
     emailError: string | null;
     onEmailChange: (value: string) => void;
     onEmailError: (value: string | null) => void;
+    onEmergencyUpdated?: (payload: {
+        id: number | string;
+        status?: string | null;
+        closedAt?: string;
+    }) => void;
 };
 
 export function DischargePreviewDialog({
@@ -57,13 +65,20 @@ export function DischargePreviewDialog({
     emailError,
     onEmailChange,
     onEmailError,
+    onEmergencyUpdated,
 }: DischargePreviewDialogProps) {
+    const [updating, setUpdating] = useState(false);
+    const [updateError, setUpdateError] = useState<string | null>(null);
+
     if (!emergency) return null;
 
     const patientLabel = emergency.paziente || 'Paziente sconosciuto';
     const accessReason = emergency.arrivo || 'Motivo accesso non indicato';
     const arrivalAt = formatDateTime(emergency.createdAt) || 'Non disponibile';
-    const dischargeAtLabel = formatDateTime(dischargeAt) || formatDateTime(new Date().toISOString());
+    const dischargeAtLabel =
+        formatDateTime(emergency.closedAt) ||
+        formatDateTime(dischargeAt) ||
+        formatDateTime(new Date().toISOString());
     const specialistName = emergency.specialist
         ? `${emergency.specialist.name ?? ''} ${emergency.specialist.surname ?? ''}`.trim()
         : 'Non assegnato';
@@ -144,6 +159,36 @@ export function DischargePreviewDialog({
         window.location.href = `mailto:${encodeURIComponent(target)}?subject=${encodeURIComponent(
             subject,
         )}&body=${encodeURIComponent(body)}`;
+    };
+
+    const handleConfirmDischarge = async () => {
+        const emergencyId = Number(emergency.id);
+        if (Number.isNaN(emergencyId)) {
+            setUpdateError('Identificativo emergenza non valido');
+            return;
+        }
+        setUpdating(true);
+        setUpdateError(null);
+        try {
+            const updated = await patchJson<{
+                id: number | string;
+                status?: string | null;
+                closed_at?: string | null;
+            }>(
+                `/api/emergencies/${emergencyId}`,
+                { status: 'dimissione' },
+            );
+            onEmergencyUpdated?.({
+                id: updated.id ?? emergencyId,
+                status: updated.status ?? 'dimissione',
+                closedAt: updated.closed_at ?? undefined,
+            });
+            onOpenChange(false);
+        } catch (err) {
+            setUpdateError(err instanceof Error ? err.message : 'Errore durante la dimissione');
+        } finally {
+            setUpdating(false);
+        }
     };
 
     return (
@@ -281,8 +326,12 @@ export function DischargePreviewDialog({
                     </div>
                     {emailError ? <p className="text-xs font-medium text-red-600">{emailError}</p> : null}
                 </div>
+                {updateError ? <p className="text-xs font-medium text-red-600">{updateError}</p> : null}
 
                 <DialogFooter className="gap-2">
+                    <Button type="button" onClick={handleConfirmDischarge} disabled={updating}>
+                        {updating ? 'Invio...' : 'Conferma dimissione'}
+                    </Button>
                     <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                         Chiudi
                     </Button>

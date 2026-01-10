@@ -54,6 +54,7 @@ type ApiEmergency = {
     notify_ps?: boolean | null;
     arrived_ps?: boolean | null;
     arrived_ps_at?: string | null;
+    closed_at?: string | null;
     created_at?: string | null;
     patient?: ApiPatient | null;
     user?: {
@@ -239,6 +240,7 @@ export default function Dashboard() {
                     em.arrived_ps && em.arrived_ps_at
                         ? em.arrived_ps_at
                         : em.created_at ?? undefined,
+                closedAt: em.closed_at ?? undefined,
                 performedInvestigationIds: (investigationsPerformed[em.id] ?? []).map(
                     (p) => p.investigation_id,
                 ),
@@ -263,7 +265,7 @@ export default function Dashboard() {
                     note: em.description ?? 'In valutazione',
                 };
             });
-    }, [emergenzeApi]);
+    }, [currentUser?.id, emergenzeApi]);
 
     const handleArrivalHandled = async (arrivalId: Arrival118['id']) => {
         const emergencyId = Number(arrivalId);
@@ -305,6 +307,7 @@ export default function Dashboard() {
         id: number | string;
         status?: string | null;
         admissionDepartment?: string | null;
+        closedAt?: string;
     }) => {
         setEmergenzeApi((prev) =>
             prev.map((item) =>
@@ -316,6 +319,8 @@ export default function Dashboard() {
                               payload.admissionDepartment !== undefined
                                   ? payload.admissionDepartment
                                   : item.admission_department,
+                          closed_at:
+                              payload.closedAt !== undefined ? payload.closedAt : item.closed_at,
                       }
                     : item,
             ),
@@ -323,10 +328,12 @@ export default function Dashboard() {
     };
 
     const summaryCards = useMemo(() => {
-        const rossi = emergenze.filter((e) => e.codice === 'Rosso').length;
-        const gialli = emergenze.filter((e) => e.codice === 'Giallo').length;
-        const inDimissione = emergenzeApi.filter((e) =>
-            (e.status ?? '').toLowerCase().includes('dimission'),
+        const rossi = emergenze.filter((e) => e.codice === 'Rosso' && !e.closedAt).length;
+        const gialli = emergenze.filter((e) => e.codice === 'Giallo' && !e.closedAt).length;
+        const inDimissione = emergenzeApi.filter(
+            (e) =>
+                (e.status ?? '').toLowerCase().includes('dimissione') &&
+                e.closed_at === null,
         ).length;
         const omiCount = emergenze.filter((e) => (e.stato ?? '').toLowerCase() === 'obi').length;
         const postiDisponibili = Math.max(0, obiCapacity - omiCount);
@@ -402,8 +409,21 @@ export default function Dashboard() {
 
     const specialistSummaryCards = useMemo(() => {
         const totalAssigned = emergenzeApi.length;
-        const sentReports = emergenzeApi.filter((e) => e.status === 'Chiusura').length;
-        const pendingReports = totalAssigned - sentReports;
+        const sentReports = emergenzeApi.filter((e) => {
+            const assignedSpecialistId = e.specialist_id ?? e.specialist?.id ?? null;
+            const isAssignedToCurrent =
+                assignedSpecialistId !== null &&
+                Number(assignedSpecialistId) === Number(currentUser?.id);
+            return isAssignedToCurrent && Boolean(e.sended_to_ps);
+        }).length;
+        const pendingReports = emergenzeApi.filter((e) => {
+            const assignedSpecialistId = e.specialist_id ?? e.specialist?.id ?? null;
+            const isAssignedToCurrent =
+                assignedSpecialistId !== null &&
+                Number(assignedSpecialistId) === Number(currentUser?.id);
+            const normalizedStatus = (e.status ?? '').replace(/\./g, '').toLowerCase();
+            return isAssignedToCurrent && normalizedStatus === 'specialist_called';
+        }).length;
 
         return [
             {

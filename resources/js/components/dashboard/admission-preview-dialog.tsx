@@ -25,6 +25,7 @@ type AdmissionEmergency = {
     codice: 'Bianco' | 'Verde' | 'Giallo' | 'Arancio' | 'Rosso';
     arrivo: string;
     createdAt?: string;
+    closedAt?: string;
     performedInvestigations: InvestigationPerformed[];
     specialist?: {
         id: number;
@@ -58,6 +59,7 @@ type AdmissionPreviewDialogProps = {
         id: number | string;
         status?: string | null;
         admissionDepartment?: string | null;
+        closedAt?: string;
     }) => void;
 };
 
@@ -123,7 +125,10 @@ export function AdmissionPreviewDialog({
     const patientLabel = emergency.paziente || 'Paziente sconosciuto';
     const accessReason = emergency.arrivo || 'Motivo accesso non indicato';
     const arrivalAt = formatDateTime(emergency.createdAt) || 'Non disponibile';
-    const admissionAtLabel = formatDateTime(admissionAt) || formatDateTime(new Date().toISOString());
+    const admissionAtLabel =
+        formatDateTime(emergency.closedAt) ||
+        formatDateTime(admissionAt) ||
+        formatDateTime(new Date().toISOString());
     const specialistName = emergency.specialist
         ? `${emergency.specialist.name ?? ''} ${emergency.specialist.surname ?? ''}`.trim()
         : 'Non assegnato';
@@ -254,7 +259,11 @@ export function AdmissionPreviewDialog({
         setConfirmingAdmission(true);
         setConfirmAdmissionError(null);
         try {
-            const updated = await patchJson<{ id: number | string; status?: string | null }>(
+            const updated = await patchJson<{
+                id: number | string;
+                status?: string | null;
+                closed_at?: string | null;
+            }>(
                 `/api/emergencies/${emergencyId}`,
                 { status: 'ricovero', admission_department: selectedDepartmentName || null },
             );
@@ -263,6 +272,7 @@ export function AdmissionPreviewDialog({
                 id: updated.id ?? emergencyId,
                 status: updatedStatus,
                 admissionDepartment: selectedDepartmentName || null,
+                closedAt: updated.closed_at ?? undefined,
             });
             onOpenChange(false);
         } catch (err) {

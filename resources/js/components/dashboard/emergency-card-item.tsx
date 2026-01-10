@@ -14,12 +14,14 @@ type EmergencyCardItemProps = {
     allowInvestigationActions: boolean;
     showSpecialistActions: boolean;
     isClosing: boolean;
+    showSpecialistOutcomeLink: boolean;
     showOmiAction: boolean;
     omiLoading: boolean;
     onOpenPatientDetails: (patientId?: number | string, patientName?: string) => void;
     onOpenFlow: (item: EmergencyItem) => void;
     onOpenStatus: (item: EmergencyItem) => void;
     onOpenSpecialist: (item: EmergencyItem) => void;
+    onOpenDetails: (item: EmergencyItem) => void;
     onOpenDischarge: (item: EmergencyItem) => void;
     onOpenAdmission: (item: EmergencyItem) => void;
     onSetOmi: (item: EmergencyItem) => void;
@@ -36,18 +38,21 @@ export function EmergencyCardItem({
     allowInvestigationActions,
     showSpecialistActions,
     isClosing,
+    showSpecialistOutcomeLink,
     showOmiAction,
     omiLoading,
     onOpenPatientDetails,
     onOpenFlow,
     onOpenStatus,
     onOpenSpecialist,
+    onOpenDetails,
     onOpenDischarge,
     onOpenAdmission,
     onSetOmi,
 }: EmergencyCardItemProps) {
     const normalizedStatus = (item.stato ?? '').replace(/\./g, '').toLowerCase();
     const isAdmitted = normalizedStatus === 'ricovero';
+    const isChiusura = normalizedStatus === 'chiusura';
     return (
         <div className="flex flex-col gap-2 rounded-lg border border-border/70 bg-background/70 p-3 shadow-xs md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
@@ -143,6 +148,16 @@ export function EmergencyCardItem({
                                 onClick={() => onOpenSpecialist(item)}
                             >
                                 Visualizza specialista chiamato
+                            </Button>
+                        ) : null}
+                        {showSpecialistOutcomeLink && isChiusura ? (
+                            <Button
+                                variant="link"
+                                size="sm"
+                                className="px-0 text-blue-700 hover:text-blue-600 dark:text-blue-200"
+                                onClick={() => onOpenDetails(item)}
+                            >
+                                Esito visita specialistica
                             </Button>
                         ) : null}
                     </>

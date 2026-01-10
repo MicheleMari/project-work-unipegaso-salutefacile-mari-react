@@ -11,6 +11,7 @@ export type EmergencyItem = {
     stato: string;
     admissionDepartment?: string | null;
     createdAt?: string;
+    closedAt?: string;
     isFrom118?: boolean;
     performedInvestigationIds: number[];
     performedInvestigations: InvestigationPerformed[];

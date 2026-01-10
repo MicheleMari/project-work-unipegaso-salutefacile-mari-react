@@ -24,6 +24,7 @@ class Emergency extends Model
         'notify_ps',
         'arrived_ps',
         'arrived_ps_at',
+        'closed_at',
         'specialist_id',
         'specialist_called_at',
     ];
@@ -36,6 +37,7 @@ class Emergency extends Model
         'notify_ps' => 'boolean',
         'arrived_ps' => 'boolean',
         'arrived_ps_at' => 'datetime',
+        'closed_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

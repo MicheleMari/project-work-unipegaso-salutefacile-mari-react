@@ -37,6 +37,7 @@ class EmergencyController extends Controller
                 'notify_ps',
                 'arrived_ps',
                 'arrived_ps_at',
+                'closed_at',
                 'specialist_called_at',
                 'created_at',
             ])
@@ -93,6 +94,9 @@ class EmergencyController extends Controller
             $data['arrived_ps'] = true;
             $data['arrived_ps_at'] = now();
         }
+        if (! empty($data['status']) && in_array($data['status'], ['ricovero', 'dimissione'], true)) {
+            $data['closed_at'] = $data['closed_at'] ?? now();
+        }
 
         return response(Emergency::create($data), Response::HTTP_CREATED);
     }
@@ -121,6 +125,13 @@ class EmergencyController extends Controller
 
         if (array_key_exists('arrived_ps', $data) && $data['arrived_ps'] && ! $emergency->arrived_ps_at) {
             $data['arrived_ps_at'] = now();
+        }
+        if (
+            array_key_exists('status', $data)
+            && in_array($data['status'], ['ricovero', 'dimissione'], true)
+            && ! $emergency->closed_at
+        ) {
+            $data['closed_at'] = now();
         }
 
         $emergency->update($data);

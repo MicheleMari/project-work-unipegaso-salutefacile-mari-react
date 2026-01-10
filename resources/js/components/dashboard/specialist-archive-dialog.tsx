@@ -51,6 +51,7 @@ export function SpecialistArchiveDialog({
                                 ? `${item.patient.name} ${item.patient.surname ?? ''}`.trim()
                                 : 'Paziente sconosciuto';
                             const codice = getCodiceLabel(item.alert_code);
+                            const statusLabel = formatStatus(item.status ?? 'Chiusura');
                             return (
                                 <div
                                     key={item.id}
@@ -73,7 +74,7 @@ export function SpecialistArchiveDialog({
                                     </div>
                                     <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 px-2 py-1 text-[11px] font-medium text-emerald-800 dark:text-emerald-100">
                                         <Stethoscope className="size-3.5" />
-                                        Chiusura
+                                        {statusLabel}
                                     </span>
                                 </div>
                             );
@@ -83,6 +84,18 @@ export function SpecialistArchiveDialog({
             </DialogContent>
         </Dialog>
     );
+}
+
+function formatStatus(status: string) {
+    if (!status) return '';
+    if (status === 'specialist_called') return 'Specialista chiamato';
+    if (status === 'referto_inviato') return 'Referto inviato';
+    const normalized = status.replace(/\./g, '').toLowerCase();
+    if (normalized === 'chiusura') return 'Chiusura';
+    if (normalized === 'ricovero') return 'Ricovero';
+    if (normalized.includes('dimissione')) return 'Dimissione';
+    const spaced = status.replace(/_/g, ' ').trim();
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
 function formatRelative(dateStr?: string | null) {

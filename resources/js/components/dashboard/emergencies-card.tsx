@@ -25,6 +25,7 @@ import { DischargePreviewDialog } from '@/components/dashboard/discharge-preview
 import { AdmissionPreviewDialog } from '@/components/dashboard/admission-preview-dialog';
 import { EmergencyCardItem } from '@/components/dashboard/emergency-card-item';
 import type { EmergencyItem } from '@/components/dashboard/emergency-types';
+import { EmergencyDetailsDialog } from '@/components/dashboard/emergency-details-dialog';
 
 type EmergenciesCardProps = {
     items: EmergencyItem[];
@@ -35,6 +36,7 @@ type EmergenciesCardProps = {
         id: number | string;
         status?: string | null;
         admissionDepartment?: string | null;
+        closedAt?: string;
     }) => void;
     title?: string;
     description?: string;
@@ -63,6 +65,7 @@ const statusBadgeClasses: Record<string, string> = {
     'Specialista chiamato': 'bg-blue-500/15 text-blue-800 dark:text-blue-100',
     'Risolto in ambulanza': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
     'Referto inviato': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
+    Dimissione: 'bg-blue-500/10 text-blue-700 dark:text-blue-200',
     Ricovero: 'bg-indigo-500/15 text-indigo-800 dark:text-indigo-100',
     Chiusura: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
     'O.B.I.': 'bg-purple-500/15 text-purple-800 dark:text-purple-100',
@@ -111,13 +114,15 @@ export function EmergenciesCard({
     const [omiError, setOmiError] = useState<string | null>(null);
     const [ricoveriDialogOpen, setRicoveriDialogOpen] = useState(false);
     const [dimissioniDialogOpen, setDimissioniDialogOpen] = useState(false);
+    const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+    const [detailsItem, setDetailsItem] = useState<EmergencyItem | null>(null);
 
     const isOmi = (item: EmergencyItem) =>
         (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'obi';
     const isRicovero = (item: EmergencyItem) =>
         (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'ricovero';
     const isDimissione = (item: EmergencyItem) =>
-        (item.stato ?? '').replace(/\./g, '').toLowerCase().includes('dimission');
+        (item.stato ?? '').replace(/\./g, '').toLowerCase().includes('dimissione');
     const isClosing = (item: EmergencyItem) =>
         (item.stato ?? '').replace(/\./g, '').toLowerCase() === 'chiusura' || isOmi(item);
 
@@ -146,6 +151,7 @@ export function EmergenciesCard({
         if (normalized === 'ricovero') return 'ricovero';
         if (normalized === 'chiusura') return 'Chiusura';
         if (normalized === 'obi') return 'obi';
+        if (normalized.includes('dimission')) return 'Dimissione';
         if (item.specialist?.id) return 'Specialista chiamato';
         if (item.performedInvestigationIds.length > 0) return 'Accertamenti preliminari in corso';
         return item.stato;
@@ -173,6 +179,8 @@ export function EmergenciesCard({
         () =>
             items.filter(
                 (item) =>
+                    !isRicovero(item) &&
+                    !isDimissione(item) &&
                     (codeFilter === 'all' || item.codice === codeFilter) &&
                     (statusFilter === 'all' ||
                         formatStatus(getDisplayStatus(item)) === statusFilter) &&
@@ -229,6 +237,7 @@ export function EmergenciesCard({
         id: number | string;
         status?: string | null;
         admissionDepartment?: string | null;
+        closedAt?: string;
     }) => {
         onEmergencyUpdated?.(payload);
     };
@@ -251,6 +260,11 @@ export function EmergenciesCard({
         setAdmissionEmail('');
         setAdmissionEmailError(null);
         setAdmissionDialogOpen(true);
+    };
+    const openEmergencyDetails = (item: EmergencyItem) => {
+        setDetailsItem(item);
+        setDetailsDialogOpen(true);
+        setRicoveriDialogOpen(false);
     };
 
     const handleSetOmi = async (item: EmergencyItem) => {
@@ -457,12 +471,14 @@ export function EmergenciesCard({
                                     allowInvestigationActions={showInvestigationActions && (!isClosing(item) || isOmi(item))}
                                     showSpecialistActions={showSpecialistActions}
                                     isClosing={isClosing(item)}
+                                    showSpecialistOutcomeLink={showInvestigationActions}
                                     showOmiAction={(item.stato ?? '').replace(/\./g, '').toLowerCase() !== 'obi'}
                                     omiLoading={omiUpdatingId === Number(item.id)}
                                     onOpenPatientDetails={openPatientDetails}
                                     onOpenFlow={handleOpenFlow}
                                     onOpenStatus={handleOpenStatus}
                                     onOpenSpecialist={openSpecialistDetails}
+                                    onOpenDetails={openEmergencyDetails}
                                     onOpenDischarge={openDischargePreview}
                                     onOpenAdmission={openAdmissionPreview}
                                     onSetOmi={handleSetOmi}
@@ -541,6 +557,7 @@ export function EmergenciesCard({
                 emailError={dischargeEmailError}
                 onEmailChange={setDischargeEmail}
                 onEmailError={setDischargeEmailError}
+                onEmergencyUpdated={onEmergencyUpdated}
             />
             <AdmissionPreviewDialog
                 open={admissionDialogOpen}
@@ -570,12 +587,25 @@ export function EmergenciesCard({
                 onOpenChange={setRicoveriDialogOpen}
                 title="Ricoveri"
                 items={ricoveriItems}
+                onItemClick={openEmergencyDetails}
             />
             <StatusListDialog
                 open={dimissioniDialogOpen}
                 onOpenChange={setDimissioniDialogOpen}
                 title="Dimissioni"
                 items={dimissioniItems}
+                onItemClick={openEmergencyDetails}
+            />
+            <EmergencyDetailsDialog
+                open={detailsDialogOpen}
+                onOpenChange={(open) => {
+                    setDetailsDialogOpen(open);
+                    if (!open) {
+                        setDetailsItem(null);
+                    }
+                }}
+                emergency={detailsItem}
+                investigationsById={investigationsById}
             />
         </>
     );
@@ -586,11 +616,13 @@ function StatusListDialog({
     onOpenChange,
     title,
     items,
+    onItemClick,
 }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     title: string;
     items: EmergencyItem[];
+    onItemClick?: (item: EmergencyItem) => void;
 }) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -602,27 +634,48 @@ function StatusListDialog({
                     {items.length === 0 ? (
                         <p className="text-sm text-muted-foreground">Nessuna emergenza presente.</p>
                     ) : (
-                        items.map((item) => (
-                            <div
-                                key={item.id}
-                                className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border/70 bg-background/70 px-3 py-2"
-                            >
-                                <div className="space-y-1">
-                                    <p className="text-sm font-semibold">{item.paziente}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {item.arrivo || 'Motivo accesso non indicato'}
-                                    </p>
-                                    {item.admissionDepartment ? (
+                        items.map((item) => {
+                            const content = (
+                                <>
+                                    <div className="space-y-1 text-left">
+                                        <p className="text-sm font-semibold">{item.paziente}</p>
                                         <p className="text-xs text-muted-foreground">
-                                            Reparto: {item.admissionDepartment}
+                                            {item.arrivo || 'Motivo accesso non indicato'}
                                         </p>
-                                    ) : null}
+                                        {item.admissionDepartment ? (
+                                            <p className="text-xs text-muted-foreground">
+                                                Reparto: {item.admissionDepartment}
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                    <Badge variant="outline" className={codiceBadgeClasses[item.codice]}>
+                                        {item.codice}
+                                    </Badge>
+                                </>
+                            );
+
+                            if (onItemClick) {
+                                return (
+                                    <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() => onItemClick(item)}
+                                        className="flex w-full flex-wrap items-start justify-between gap-3 rounded-lg border border-border/70 bg-background/70 px-3 py-2 text-left transition hover:border-primary/40"
+                                    >
+                                        {content}
+                                    </button>
+                                );
+                            }
+
+                            return (
+                                <div
+                                    key={item.id}
+                                    className="flex flex-wrap items-start justify-between gap-3 rounded-lg border border-border/70 bg-background/70 px-3 py-2"
+                                >
+                                    {content}
                                 </div>
-                                <Badge variant="outline" className={codiceBadgeClasses[item.codice]}>
-                                    {item.codice}
-                                </Badge>
-                            </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
             </DialogContent>
@@ -717,6 +770,7 @@ function formatStatus(status: string) {
     if (normalized === 'ricovero') return 'Ricovero';
     if (normalized === 'chiusura') return 'Chiusura';
     if (normalized === 'obi') return 'O.B.I.';
+    if (normalized.includes('dimission')) return 'Dimissione';
     const spaced = status.replace(/_/g, ' ').trim();
     return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
