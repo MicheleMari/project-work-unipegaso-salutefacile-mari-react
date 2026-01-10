@@ -8,9 +8,18 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import type { InvestigationPerformed } from '@/components/dashboard/investigation-cards/types';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { apiRequest, patchJson } from '@/lib/api';
+import type { DepartmentOption, InvestigationPerformed } from '@/components/dashboard/investigation-cards/types';
+import { useEffect, useState } from 'react';
 
-type DischargeEmergency = {
+type AdmissionEmergency = {
     id: number | string;
     paziente: string;
     codice: 'Bianco' | 'Verde' | 'Giallo' | 'Arancio' | 'Rosso';
@@ -31,11 +40,13 @@ type DischargeEmergency = {
     } | null;
 };
 
-type DischargePreviewDialogProps = {
+type AdmissionPreviewDialogProps = {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    emergency: DischargeEmergency | null;
-    dischargeAt: string;
+    emergency: AdmissionEmergency | null;
+    admissionAt: string;
+    admissionDepartment?: string | null;
+    readOnly?: boolean;
     investigationsById: Map<number, string>;
     operatorName: string;
     operatorEmail: string;
@@ -43,13 +54,20 @@ type DischargePreviewDialogProps = {
     emailError: string | null;
     onEmailChange: (value: string) => void;
     onEmailError: (value: string | null) => void;
+    onEmergencyUpdated?: (payload: {
+        id: number | string;
+        status?: string | null;
+        admissionDepartment?: string | null;
+    }) => void;
 };
 
-export function DischargePreviewDialog({
+export function AdmissionPreviewDialog({
     open,
     onOpenChange,
     emergency,
-    dischargeAt,
+    admissionAt,
+    admissionDepartment,
+    readOnly = false,
     investigationsById,
     operatorName,
     operatorEmail,
@@ -57,13 +75,55 @@ export function DischargePreviewDialog({
     emailError,
     onEmailChange,
     onEmailError,
-}: DischargePreviewDialogProps) {
+    onEmergencyUpdated,
+}: AdmissionPreviewDialogProps) {
+    const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+    const [departmentsLoading, setDepartmentsLoading] = useState(false);
+    const [departmentsError, setDepartmentsError] = useState<string | null>(null);
+    const [selectedDepartmentId, setSelectedDepartmentId] = useState('');
+    const [departmentError, setDepartmentError] = useState<string | null>(null);
+    const [departmentSearch, setDepartmentSearch] = useState('');
+    const [confirmingAdmission, setConfirmingAdmission] = useState(false);
+    const [confirmAdmissionError, setConfirmAdmissionError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!open) return;
+
+        setSelectedDepartmentId('');
+        setDepartmentError(null);
+        setDepartmentSearch('');
+        setConfirmAdmissionError(null);
+
+        if (departments.length) return;
+        let active = true;
+        const load = async () => {
+            setDepartmentsLoading(true);
+            setDepartmentsError(null);
+            try {
+                const data = await apiRequest<DepartmentOption[]>('/api/departments');
+                if (!active) return;
+                setDepartments(data);
+            } catch (err) {
+                if (!active) return;
+                setDepartmentsError(err instanceof Error ? err.message : 'Errore caricamento reparti');
+            } finally {
+                if (active) setDepartmentsLoading(false);
+            }
+        };
+
+        load();
+
+        return () => {
+            active = false;
+        };
+    }, [open, departments.length]);
+
     if (!emergency) return null;
 
     const patientLabel = emergency.paziente || 'Paziente sconosciuto';
     const accessReason = emergency.arrivo || 'Motivo accesso non indicato';
     const arrivalAt = formatDateTime(emergency.createdAt) || 'Non disponibile';
-    const dischargeAtLabel = formatDateTime(dischargeAt) || formatDateTime(new Date().toISOString());
+    const admissionAtLabel = formatDateTime(admissionAt) || formatDateTime(new Date().toISOString());
     const specialistName = emergency.specialist
         ? `${emergency.specialist.name ?? ''} ${emergency.specialist.surname ?? ''}`.trim()
         : 'Non assegnato';
@@ -71,10 +131,44 @@ export function DischargePreviewDialog({
     const specialistReport = emergency.result;
     const investigations = emergency.performedInvestigations ?? [];
 
+    const selectedDepartmentName =
+        departments.find((dept) => String(dept.id) === selectedDepartmentId)?.name ??
+        (selectedDepartmentId ? `Reparto #${selectedDepartmentId}` : '');
+    const admissionDepartmentName = admissionDepartment?.trim() ?? '';
+    const resolvedDepartmentName = selectedDepartmentName || admissionDepartmentName;
+    const selectedDepartmentAvailability = selectedDepartmentId
+        ? getDepartmentAvailability(selectedDepartmentId)
+        : null;
+
+    const filteredDepartments = departmentSearch.trim()
+        ? departments.filter((dept) =>
+              `${dept.name ?? `Reparto #${dept.id}`}`
+                  .toLowerCase()
+                  .includes(departmentSearch.trim().toLowerCase()),
+          )
+        : departments;
+
+    const ensureDepartmentSelected = () => {
+        if (readOnly) {
+            if (!resolvedDepartmentName) {
+                setDepartmentError('Reparto di ricovero non indicato');
+                return false;
+            }
+            return true;
+        }
+        if (!selectedDepartmentId) {
+            setDepartmentError('Seleziona il reparto di ricovero');
+            return false;
+        }
+        setDepartmentError(null);
+        return true;
+    };
+
     const handlePrint = () => {
-        const html = buildDischargeHtml({
+        if (!ensureDepartmentSelected()) return;
+        const html = buildAdmissionHtml({
             emergency,
-            dischargeAt: dischargeAtLabel,
+            admissionAt: admissionAtLabel,
             arrivalAt,
             patientLabel,
             accessReason,
@@ -84,6 +178,7 @@ export function DischargePreviewDialog({
             investigations,
             investigationsById,
             operatorName,
+            admissionDepartment: resolvedDepartmentName || 'Reparto non indicato',
         });
         const win = window.open('', '_blank');
         if (!win) {
@@ -99,12 +194,13 @@ export function DischargePreviewDialog({
 
     const buildMailBody = () => {
         const lines = [
-            `Verbale di dimissione - ER #${emergency.id}`,
+            `Verbale di ricovero - ER #${emergency.id}`,
             `Paziente: ${patientLabel}`,
             `Motivo accesso: ${accessReason}`,
             `Codice entrata: ${emergency.codice}`,
             `Data/ora arrivo: ${arrivalAt}`,
-            `Data/ora dimissione: ${dischargeAtLabel}`,
+            `Data/ora ricovero: ${admissionAtLabel}`,
+            `Reparto di ricovero: ${resolvedDepartmentName || 'Reparto non indicato'}`,
             `Operatore PS: ${operatorName}`,
             '',
             'Accertamenti:',
@@ -138,23 +234,131 @@ export function DischargePreviewDialog({
             onEmailError('Inserisci un indirizzo email');
             return;
         }
+        if (!ensureDepartmentSelected()) return;
         onEmailError(null);
-        const subject = `Verbale dimissione ER #${emergency.id}`;
+        const subject = `Verbale ricovero ER #${emergency.id}`;
         const body = buildMailBody();
         window.location.href = `mailto:${encodeURIComponent(target)}?subject=${encodeURIComponent(
             subject,
         )}&body=${encodeURIComponent(body)}`;
     };
 
+    const handleConfirmAdmission = async () => {
+        if (!ensureDepartmentSelected()) return;
+        const emergencyId = Number(emergency.id);
+        if (Number.isNaN(emergencyId)) {
+            setConfirmAdmissionError('Identificativo emergenza non valido');
+            return;
+        }
+
+        setConfirmingAdmission(true);
+        setConfirmAdmissionError(null);
+        try {
+            const updated = await patchJson<{ id: number | string; status?: string | null }>(
+                `/api/emergencies/${emergencyId}`,
+                { status: 'ricovero', admission_department: selectedDepartmentName || null },
+            );
+            const updatedStatus = updated.status ?? 'ricovero';
+            onEmergencyUpdated?.({
+                id: updated.id ?? emergencyId,
+                status: updatedStatus,
+                admissionDepartment: selectedDepartmentName || null,
+            });
+            onOpenChange(false);
+        } catch (err) {
+            setConfirmAdmissionError(err instanceof Error ? err.message : 'Errore durante la conferma del ricovero');
+        } finally {
+            setConfirmingAdmission(false);
+        }
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-5xl">
                 <DialogHeader>
-                    <DialogTitle>Verbale di dimissione</DialogTitle>
+                    <DialogTitle>Verbale di ricovero</DialogTitle>
                     <DialogDescription>
-                        Anteprima del verbale con tutti i dettagli clinici e amministrativi.
+                        Anteprima del verbale di ricovero con indicazione del reparto richiesto.
                     </DialogDescription>
                 </DialogHeader>
+                <div className="space-y-2">
+                    <label className="text-xs font-semibold text-muted-foreground" htmlFor="admission-department">
+                        Reparto di ricovero
+                    </label>
+                    {readOnly ? (
+                        <div className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-sm font-medium text-foreground">
+                            {resolvedDepartmentName || 'Non indicato'}
+                        </div>
+                    ) : (
+                        <Select
+                            value={selectedDepartmentId}
+                            onValueChange={(value) => {
+                                setSelectedDepartmentId(value);
+                                setDepartmentError(null);
+                            }}
+                        >
+                            <SelectTrigger
+                                id="admission-department"
+                                className="h-11 justify-between bg-background px-3 shadow-sm"
+                            >
+                                <SelectValue placeholder="Seleziona reparto" />
+                                {selectedDepartmentAvailability ? (
+                                    <span className="ml-auto inline-flex items-center gap-2 text-xs text-muted-foreground">
+                                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
+                                            {selectedDepartmentAvailability} posti
+                                        </span>
+                                    </span>
+                                ) : null}
+                            </SelectTrigger>
+                            <SelectContent className="w-[var(--radix-select-trigger-width)]">
+                                <div className="sticky top-0 z-10 border-b border-border/70 bg-popover px-2 py-2">
+                                    <Input
+                                        type="search"
+                                        placeholder="Cerca reparto..."
+                                        value={departmentSearch}
+                                        onChange={(event) => setDepartmentSearch(event.target.value)}
+                                        onKeyDown={(event) => event.stopPropagation()}
+                                    />
+                                </div>
+                                {filteredDepartments.length ? (
+                                    filteredDepartments.map((dept) => {
+                                        const availability = getDepartmentAvailability(dept.id);
+                                        return (
+                                            <SelectItem
+                                                key={dept.id}
+                                                value={String(dept.id)}
+                                                className="py-2"
+                                            >
+                                                <span className="flex w-full items-center justify-between gap-3">
+                                                    <span className="text-sm">
+                                                        {dept.name ?? `Reparto #${dept.id}`}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {availability} posti
+                                                    </span>
+                                                </span>
+                                            </SelectItem>
+                                        );
+                                    })
+                                ) : (
+                                    <p className="px-3 py-2 text-xs text-muted-foreground">
+                                        Nessun reparto trovato.
+                                    </p>
+                                )}
+                            </SelectContent>
+                        </Select>
+                    )}
+                    {departmentsLoading ? (
+                        <p className="text-xs text-muted-foreground">Caricamento reparti...</p>
+                    ) : null}
+                    {departmentsError ? (
+                        <p className="text-xs font-medium text-red-600">{departmentsError}</p>
+                    ) : null}
+                    {departmentError ? (
+                        <p className="text-xs font-medium text-red-600">{departmentError}</p>
+                    ) : null}
+                </div>
                 <div className="max-h-[55vh] space-y-5 overflow-y-auto pr-2">
                     <section className="rounded-lg border border-border/70 bg-muted/30 p-4">
                         <h3 className="text-sm font-semibold">Dati generali</h3>
@@ -248,11 +452,17 @@ export function DischargePreviewDialog({
                     </section>
 
                     <section className="rounded-lg border border-border/70 bg-muted/30 p-4">
-                        <h3 className="text-sm font-semibold">Dimissione</h3>
+                        <h3 className="text-sm font-semibold">Ricovero</h3>
                         <div className="mt-2 grid gap-2 text-sm md:grid-cols-2">
                             <div>
-                                <p className="text-xs text-muted-foreground">Data/ora dimissione</p>
-                                <p className="font-medium">{dischargeAtLabel}</p>
+                                <p className="text-xs text-muted-foreground">Data/ora ricovero</p>
+                                <p className="font-medium">{admissionAtLabel}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Reparto di ricovero</p>
+                                <p className="font-medium">
+                                    {resolvedDepartmentName || 'Selezionare reparto'}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-xs text-muted-foreground">Firma digitale operatore PS</p>
@@ -263,12 +473,12 @@ export function DischargePreviewDialog({
                 </div>
 
                 <div className="space-y-2 pt-4">
-                    <label className="text-xs font-semibold text-muted-foreground" htmlFor="discharge-email">
+                    <label className="text-xs font-semibold text-muted-foreground" htmlFor="admission-email">
                         Invia via email
                     </label>
                     <div className="flex flex-col gap-2 md:flex-row md:items-center">
                         <Input
-                            id="discharge-email"
+                            id="admission-email"
                             type="email"
                             placeholder="nome@dominio.it"
                             value={emailValue}
@@ -282,6 +492,10 @@ export function DischargePreviewDialog({
                     {emailError ? <p className="text-xs font-medium text-red-600">{emailError}</p> : null}
                 </div>
 
+                {confirmAdmissionError ? (
+                    <p className="text-xs font-medium text-red-600">{confirmAdmissionError}</p>
+                ) : null}
+
                 <DialogFooter className="gap-2">
                     <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                         Chiudi
@@ -289,6 +503,11 @@ export function DischargePreviewDialog({
                     <Button type="button" onClick={handlePrint}>
                         Stampa PDF
                     </Button>
+                    {readOnly ? null : (
+                        <Button type="button" onClick={handleConfirmAdmission} disabled={confirmingAdmission}>
+                            {confirmingAdmission ? 'Conferma in corso...' : 'Conferma ricovero'}
+                        </Button>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -317,24 +536,31 @@ function escapeHtml(value: string) {
         .replace(/'/g, '&#39;');
 }
 
-type DischargeHtmlPayload = {
-    emergency: DischargeEmergency;
-    dischargeAt: string;
+function getDepartmentAvailability(id: number | string) {
+    const base = Number(String(id).replace(/\D/g, ''));
+    if (!Number.isFinite(base)) return 6;
+    return ((base * 7) % 12) + 3;
+}
+
+type AdmissionHtmlPayload = {
+    emergency: AdmissionEmergency;
+    admissionAt: string;
     arrivalAt: string;
     patientLabel: string;
     accessReason: string;
     specialistName: string;
     specialistDepartment: string;
-    specialistReport: DischargeEmergency['result'];
+    specialistReport: AdmissionEmergency['result'];
     investigations: InvestigationPerformed[];
     investigationsById: Map<number, string>;
     operatorName: string;
+    admissionDepartment: string;
 };
 
-function buildDischargeHtml(payload: DischargeHtmlPayload) {
+function buildAdmissionHtml(payload: AdmissionHtmlPayload) {
     const {
         emergency,
-        dischargeAt,
+        admissionAt,
         arrivalAt,
         patientLabel,
         accessReason,
@@ -344,6 +570,7 @@ function buildDischargeHtml(payload: DischargeHtmlPayload) {
         investigations,
         investigationsById,
         operatorName,
+        admissionDepartment,
     } = payload;
     const investigationsRows = investigations.length
         ? investigations
@@ -379,7 +606,7 @@ function buildDischargeHtml(payload: DischargeHtmlPayload) {
 <html lang="it">
 <head>
     <meta charset="utf-8" />
-    <title>Verbale di dimissione</title>
+    <title>Verbale di ricovero</title>
     <style>
         :root {
             color-scheme: light;
@@ -462,7 +689,7 @@ function buildDischargeHtml(payload: DischargeHtmlPayload) {
     </style>
 </head>
 <body>
-    <h1>Verbale di dimissione</h1>
+    <h1>Verbale di ricovero</h1>
     <p>Numero pratica: ER #${escapeHtml(String(emergency.id))}</p>
 
     <h2>Dati anagrafici e accesso</h2>
@@ -530,11 +757,15 @@ function buildDischargeHtml(payload: DischargeHtmlPayload) {
         </tbody>
     </table>
 
-    <h2>Dimissione</h2>
+    <h2>Ricovero</h2>
     <div class="meta">
         <div>
-            <div class="label">Data e ora dimissione</div>
-            <div>${escapeHtml(dischargeAt)}</div>
+            <div class="label">Data e ora ricovero</div>
+            <div>${escapeHtml(admissionAt)}</div>
+        </div>
+        <div>
+            <div class="label">Reparto di ricovero</div>
+            <div>${escapeHtml(admissionDepartment)}</div>
         </div>
         <div>
             <div class="label">Operatore PS</div>

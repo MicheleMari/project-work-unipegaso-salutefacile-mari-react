@@ -48,6 +48,7 @@ type ApiEmergency = {
     description?: string | null;
     alert_code?: string | null;
     status?: string | null;
+    admission_department?: string | null;
     result?: Record<string, unknown> | null;
     sended_to_ps?: boolean | null;
     notify_ps?: boolean | null;
@@ -85,6 +86,16 @@ type ApiInvestigationPerformed = {
 
 const operativeActionsInitial: { title: string; accent: 'amber' | 'blue' | 'emerald'; badge: string; badgeTone?: 'solid' | 'muted' }[] =
     [];
+
+const formatPriorityCode = (alert?: string | null) => {
+    const normalized = (alert ?? '').toLowerCase();
+    if (normalized === 'rosso') return 'Rosso';
+    if (normalized === 'arancio' || normalized === 'arancione') return 'Arancio';
+    if (normalized === 'giallo') return 'Giallo';
+    if (normalized === 'verde') return 'Verde';
+    if (normalized === 'bianco') return 'Bianco';
+    return 'Verde';
+};
 
 export default function Dashboard() {
     const page = usePage<{ props: SharedData }>();
@@ -200,13 +211,7 @@ export default function Dashboard() {
 
         return visibleEmergencies.map((em) => {
             const fullName = `${em.patient?.name ?? ''} ${em.patient?.surname ?? ''}`.trim();
-            const alert = (em.alert_code ?? '').toLowerCase();
-            const codice =
-                alert === 'rosso'
-                    ? 'Rosso'
-                    : alert === 'giallo' || alert === 'arancio'
-                      ? 'Giallo'
-                      : 'Verde';
+            const codice = formatPriorityCode(em.alert_code);
             return {
                 id: em.id,
                 patientId: em.patient?.id,
@@ -216,6 +221,7 @@ export default function Dashboard() {
                 attesa: '--:--',
                 destinazione: em.status ?? 'In valutazione',
                 stato: em.status ?? 'In triage',
+                admissionDepartment: em.admission_department ?? null,
                 isFrom118: (em.user?.permission?.name ?? '') === 'Operatore 118',
                 specialist: em.specialist
                     ? {
@@ -246,13 +252,7 @@ export default function Dashboard() {
             .filter((em) => em.notify_ps && !em.arrived_ps)
             .map((em) => {
                 const fullName = `${em.patient?.name ?? ''} ${em.patient?.surname ?? ''}`.trim();
-                const alert = (em.alert_code ?? '').toLowerCase();
-                const codice =
-                    alert === 'rosso'
-                        ? 'Rosso'
-                        : alert === 'giallo' || alert === 'arancio'
-                          ? 'Giallo'
-                          : 'Verde';
+                const codice = formatPriorityCode(em.alert_code);
 
                 return {
                     id: `${em.id}`,
@@ -301,10 +301,23 @@ export default function Dashboard() {
         });
     };
 
-    const handleEmergencyUpdated = (payload: { id: number | string; status?: string | null }) => {
+    const handleEmergencyUpdated = (payload: {
+        id: number | string;
+        status?: string | null;
+        admissionDepartment?: string | null;
+    }) => {
         setEmergenzeApi((prev) =>
             prev.map((item) =>
-                Number(item.id) === Number(payload.id) ? { ...item, status: payload.status ?? item.status } : item,
+                Number(item.id) === Number(payload.id)
+                    ? {
+                          ...item,
+                          status: payload.status ?? item.status,
+                          admission_department:
+                              payload.admissionDepartment !== undefined
+                                  ? payload.admissionDepartment
+                                  : item.admission_department,
+                      }
+                    : item,
             ),
         );
     };
@@ -428,7 +441,7 @@ export default function Dashboard() {
             .filter((e) => Boolean(e.arrived_ps))
             .map((e) => (e.alert_code ?? '').toLowerCase());
         const shockRoom = alerts.filter((code) => code === 'rosso').length;
-        const osservazione = alerts.filter((code) => code === 'giallo' || code === 'arancio').length;
+        const osservazione = alerts.filter((code) => code === 'giallo' || code === 'arancio' || code === 'arancione').length;
         const areaVerde = alerts.filter((code) => code === 'verde' || code === 'bianco' || code === '').length;
         return { shockRoom, osservazione, areaVerde };
     }, [emergenzeApi]);

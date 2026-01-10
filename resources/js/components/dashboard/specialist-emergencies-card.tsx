@@ -67,7 +67,9 @@ export function SpecialistEmergenciesCard({ items, onEmergencyUpdated }: Special
     const getCodiceLabel = (code?: string | null) => {
         const alert = (code ?? '').toLowerCase();
         if (alert === 'rosso') return 'Rosso';
-        if (alert === 'giallo' || alert === 'arancio') return 'Giallo';
+        if (alert === 'arancio' || alert === 'arancione') return 'Arancio';
+        if (alert === 'giallo') return 'Giallo';
+        if (alert === 'bianco') return 'Bianco';
         return 'Verde';
     };
 
@@ -204,8 +206,11 @@ function formatRelative(dateStr?: string | null) {
 
 const codiceBadgeClasses: Record<string, string> = {
     Rosso: 'border-red-200 bg-red-500/10 text-red-700 dark:border-red-900/50 dark:text-red-200',
+    Arancio:
+        'border-orange-200 bg-orange-500/10 text-orange-700 dark:border-orange-900/50 dark:text-orange-200',
     Giallo:
         'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/50 dark:text-amber-200',
     Verde:
         'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/50 dark:text-emerald-200',
+    Bianco: 'border-slate-200 bg-slate-200/50 text-slate-700 dark:border-slate-700 dark:text-slate-100',
 };

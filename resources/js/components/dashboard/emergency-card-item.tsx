@@ -21,6 +21,7 @@ type EmergencyCardItemProps = {
     onOpenStatus: (item: EmergencyItem) => void;
     onOpenSpecialist: (item: EmergencyItem) => void;
     onOpenDischarge: (item: EmergencyItem) => void;
+    onOpenAdmission: (item: EmergencyItem) => void;
     onSetOmi: (item: EmergencyItem) => void;
 };
 
@@ -42,8 +43,11 @@ export function EmergencyCardItem({
     onOpenStatus,
     onOpenSpecialist,
     onOpenDischarge,
+    onOpenAdmission,
     onSetOmi,
 }: EmergencyCardItemProps) {
+    const normalizedStatus = (item.stato ?? '').replace(/\./g, '').toLowerCase();
+    const isAdmitted = normalizedStatus === 'ricovero';
     return (
         <div className="flex flex-col gap-2 rounded-lg border border-border/70 bg-background/70 p-3 shadow-xs md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
@@ -62,7 +66,7 @@ export function EmergencyCardItem({
                         {item.paziente}
                     </button>
                     <p className="text-xs text-muted-foreground">{item.arrivo}</p>
-                    {['risolto_in_ambulanza', 'obi'].includes((item.stato ?? '').replace(/\./g, '').toLowerCase()) ? null : (
+                    {['risolto_in_ambulanza', 'obi', 'ricovero'].includes(normalizedStatus) ? null : (
                         <div
                             className={`inline-flex items-center gap-2 rounded-md px-2 py-1 text-[11px] font-semibold ${waitTone.className}`}
                         >
@@ -77,45 +81,72 @@ export function EmergencyCardItem({
                 </div>
             </div>
             <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
-                <span
-                    className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${
-                        statusClassName || 'bg-muted text-muted-foreground'
-                    }`}
-                >
-                    <Stethoscope className="size-3.5" />
-                    {displayStatus}
-                </span>
-                {allowInvestigationActions ? (
-                    <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-1 font-medium"
-                        onClick={() => onOpenFlow(item)}
-                    >
-                        <Stethoscope className="mr-2 size-4" aria-hidden="true" />
-                        Richiesta accertamenti preliminari
-                    </Button>
-                ) : null}
-                {allowInvestigationActions ? (
-                    <Button
-                        variant="link"
-                        size="sm"
-                        className="px-0 text-emerald-700 hover:text-emerald-600 dark:text-emerald-200"
-                        onClick={() => onOpenStatus(item)}
-                    >
-                        Rivedi esami e consulenze
-                    </Button>
-                ) : null}
-                {showSpecialistActions && item.specialist && !isClosing ? (
-                    <Button
-                        variant="link"
-                        size="sm"
-                        className="px-0 text-blue-700 hover:text-blue-600 dark:text-blue-200"
-                        onClick={() => onOpenSpecialist(item)}
-                    >
-                        Visualizza specialista chiamato
-                    </Button>
-                ) : null}
+                {isAdmitted ? (
+                    <>
+                        <span
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${
+                                statusClassName || 'bg-muted text-muted-foreground'
+                            }`}
+                        >
+                            <Stethoscope className="size-3.5" />
+                            {displayStatus}
+                        </span>
+                        <div className="text-xs text-muted-foreground">Reparto di ricovero</div>
+                        <div className="text-sm font-semibold text-foreground">
+                            {item.admissionDepartment || 'Non indicato'}
+                        </div>
+                        <Button
+                            variant="link"
+                            size="sm"
+                            className="px-0 text-blue-700 hover:text-blue-600 dark:text-blue-200"
+                            onClick={() => onOpenAdmission(item)}
+                        >
+                            Stampa verbale di ricovero
+                        </Button>
+                    </>
+                ) : (
+                    <>
+                        <span
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${
+                                statusClassName || 'bg-muted text-muted-foreground'
+                            }`}
+                        >
+                            <Stethoscope className="size-3.5" />
+                            {displayStatus}
+                        </span>
+                        {allowInvestigationActions ? (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-1 font-medium"
+                                onClick={() => onOpenFlow(item)}
+                            >
+                                <Stethoscope className="mr-2 size-4" aria-hidden="true" />
+                                Richiesta accertamenti preliminari
+                            </Button>
+                        ) : null}
+                        {allowInvestigationActions ? (
+                            <Button
+                                variant="link"
+                                size="sm"
+                                className="px-0 text-emerald-700 hover:text-emerald-600 dark:text-emerald-200"
+                                onClick={() => onOpenStatus(item)}
+                            >
+                                Rivedi esami e consulenze
+                            </Button>
+                        ) : null}
+                        {showSpecialistActions && item.specialist && !isClosing ? (
+                            <Button
+                                variant="link"
+                                size="sm"
+                                className="px-0 text-blue-700 hover:text-blue-600 dark:text-blue-200"
+                                onClick={() => onOpenSpecialist(item)}
+                            >
+                                Visualizza specialista chiamato
+                            </Button>
+                        ) : null}
+                    </>
+                )}
                 {isClosing ? (
                     <div className="flex flex-wrap items-center gap-2">
                         <Button
@@ -141,6 +172,7 @@ export function EmergencyCardItem({
                             size="sm"
                             variant="outline"
                             className="border-red-200 bg-red-500/10 text-red-800 hover:bg-red-500/15 dark:border-red-900 dark:text-red-100"
+                            onClick={() => onOpenAdmission(item)}
                         >
                             Ricovera
                         </Button>

@@ -22,6 +22,7 @@ import { patchJson, postJson } from '@/lib/api';
 import { usePage } from '@inertiajs/react';
 import type { SharedData } from '@/types';
 import { DischargePreviewDialog } from '@/components/dashboard/discharge-preview-dialog';
+import { AdmissionPreviewDialog } from '@/components/dashboard/admission-preview-dialog';
 import { EmergencyCardItem } from '@/components/dashboard/emergency-card-item';
 import type { EmergencyItem } from '@/components/dashboard/emergency-types';
 
@@ -30,7 +31,11 @@ type EmergenciesCardProps = {
     investigations: PreliminaryExam[];
     onInvestigationsRecorded?: (emergencyId: number, records: InvestigationPerformed[]) => void;
     onSpecialistCalled?: (payload: SpecialistCallResult) => void;
-    onEmergencyUpdated?: (payload: { id: number | string; status?: string | null }) => void;
+    onEmergencyUpdated?: (payload: {
+        id: number | string;
+        status?: string | null;
+        admissionDepartment?: string | null;
+    }) => void;
     title?: string;
     description?: string;
     showInvestigationActions?: boolean;
@@ -39,10 +44,13 @@ type EmergenciesCardProps = {
 
 const codiceBadgeClasses: Record<EmergencyItem['codice'], string> = {
     Rosso: 'border-red-200 bg-red-500/10 text-red-700 dark:border-red-900/50 dark:text-red-200',
+    Arancio:
+        'border-orange-200 bg-orange-500/10 text-orange-700 dark:border-orange-900/50 dark:text-orange-200',
     Giallo:
         'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/50 dark:text-amber-200',
     Verde:
         'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/50 dark:text-emerald-200',
+    Bianco: 'border-slate-200 bg-slate-200/50 text-slate-700 dark:border-slate-700 dark:text-slate-100',
 };
 
 const statusBadgeClasses: Record<string, string> = {
@@ -55,6 +63,7 @@ const statusBadgeClasses: Record<string, string> = {
     'Specialista chiamato': 'bg-blue-500/15 text-blue-800 dark:text-blue-100',
     'Risolto in ambulanza': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
     'Referto inviato': 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
+    Ricovero: 'bg-indigo-500/15 text-indigo-800 dark:text-indigo-100',
     Chiusura: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-100',
     'O.B.I.': 'bg-purple-500/15 text-purple-800 dark:text-purple-100',
 };
@@ -93,6 +102,11 @@ export function EmergenciesCard({
     const [dischargeAt, setDischargeAt] = useState<string>('');
     const [dischargeEmail, setDischargeEmail] = useState('');
     const [dischargeEmailError, setDischargeEmailError] = useState<string | null>(null);
+    const [admissionDialogOpen, setAdmissionDialogOpen] = useState(false);
+    const [admissionItem, setAdmissionItem] = useState<EmergencyItem | null>(null);
+    const [admissionAt, setAdmissionAt] = useState<string>('');
+    const [admissionEmail, setAdmissionEmail] = useState('');
+    const [admissionEmailError, setAdmissionEmailError] = useState<string | null>(null);
     const [omiUpdatingId, setOmiUpdatingId] = useState<number | null>(null);
     const [omiError, setOmiError] = useState<string | null>(null);
 
@@ -123,6 +137,7 @@ export function EmergenciesCard({
 
     const getDisplayStatus = (item: EmergencyItem) => {
         const normalized = (item.stato ?? '').replace(/\./g, '').toLowerCase();
+        if (normalized === 'ricovero') return 'ricovero';
         if (normalized === 'chiusura') return 'Chiusura';
         if (normalized === 'obi') return 'obi';
         if (item.specialist?.id) return 'Specialista chiamato';
@@ -202,6 +217,14 @@ export function EmergenciesCard({
         onSpecialistCalled?.(payload);
     };
 
+    const handleAdmissionUpdated = (payload: {
+        id: number | string;
+        status?: string | null;
+        admissionDepartment?: string | null;
+    }) => {
+        onEmergencyUpdated?.(payload);
+    };
+
     const openSpecialistDetails = (item: EmergencyItem) => {
         if (!item.specialist) return;
         setCalledSpecialist({ emergencyId: item.id, specialist: item.specialist });
@@ -213,6 +236,13 @@ export function EmergenciesCard({
         setDischargeEmail('');
         setDischargeEmailError(null);
         setDischargeDialogOpen(true);
+    };
+    const openAdmissionPreview = (item: EmergencyItem) => {
+        setAdmissionItem(item);
+        setAdmissionAt(new Date().toISOString());
+        setAdmissionEmail('');
+        setAdmissionEmailError(null);
+        setAdmissionDialogOpen(true);
     };
 
     const handleSetOmi = async (item: EmergencyItem) => {
@@ -414,6 +444,7 @@ export function EmergenciesCard({
                                     onOpenStatus={handleOpenStatus}
                                     onOpenSpecialist={openSpecialistDetails}
                                     onOpenDischarge={openDischargePreview}
+                                    onOpenAdmission={openAdmissionPreview}
                                     onSetOmi={handleSetOmi}
                                 />
                             );
@@ -490,6 +521,29 @@ export function EmergenciesCard({
                 emailError={dischargeEmailError}
                 onEmailChange={setDischargeEmail}
                 onEmailError={setDischargeEmailError}
+            />
+            <AdmissionPreviewDialog
+                open={admissionDialogOpen}
+                onOpenChange={(open) => {
+                    setAdmissionDialogOpen(open);
+                    if (!open) {
+                        setAdmissionItem(null);
+                    }
+                }}
+                emergency={admissionItem}
+                admissionAt={admissionAt}
+                admissionDepartment={admissionItem?.admissionDepartment ?? null}
+                readOnly={
+                    (admissionItem?.stato ?? '').replace(/\./g, '').toLowerCase() === 'ricovero'
+                }
+                investigationsById={investigationsById}
+                operatorName={formatUserName(page?.props?.auth?.user)}
+                operatorEmail={page?.props?.auth?.user?.email ?? ''}
+                emailValue={admissionEmail}
+                emailError={admissionEmailError}
+                onEmailChange={setAdmissionEmail}
+                onEmailError={setAdmissionEmailError}
+                onEmergencyUpdated={handleAdmissionUpdated}
             />
         </>
     );
@@ -579,6 +633,7 @@ function formatStatus(status: string) {
     if (!status) return '';
     if (status === 'referto_inviato') return 'Referto inviato';
     const normalized = status.replace(/\./g, '').toLowerCase();
+    if (normalized === 'ricovero') return 'Ricovero';
     if (normalized === 'chiusura') return 'Chiusura';
     if (normalized === 'obi') return 'O.B.I.';
     const spaced = status.replace(/_/g, ' ').trim();
@@ -634,8 +689,10 @@ function getWaitTone(item: EmergencyItem, nowMs: number) {
 
     const thresholdsMs: Record<EmergencyItem['codice'], { green: number; yellow: number }> = {
         Rosso: { green: 5 * 60_000, yellow: 10 * 60_000 }, // immediato
+        Arancio: { green: 7 * 60_000, yellow: 20 * 60_000 },
         Giallo: { green: 10 * 60_000, yellow: 30 * 60_000 },
         Verde: { green: 60 * 60_000, yellow: 120 * 60_000 },
+        Bianco: { green: 120 * 60_000, yellow: 180 * 60_000 },
     };
 
     const { green, yellow } = thresholdsMs[item.codice];

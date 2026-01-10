@@ -18,6 +18,7 @@ class Emergency extends Model
         'patient_id',
         'vital_signs',
         'status',
+        'admission_department',
         'result',
         'sended_to_ps',
         'notify_ps',

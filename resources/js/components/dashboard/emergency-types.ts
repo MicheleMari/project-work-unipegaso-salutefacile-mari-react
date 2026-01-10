@@ -4,11 +4,12 @@ export type EmergencyItem = {
     id: number | string;
     patientId?: number | string;
     paziente: string;
-    codice: 'Rosso' | 'Giallo' | 'Verde';
+    codice: 'Bianco' | 'Verde' | 'Giallo' | 'Arancio' | 'Rosso';
     arrivo: string;
     attesa: string;
     destinazione: string;
     stato: string;
+    admissionDepartment?: string | null;
     createdAt?: string;
     isFrom118?: boolean;
     performedInvestigationIds: number[];

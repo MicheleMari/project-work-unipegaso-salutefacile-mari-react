@@ -6,7 +6,7 @@ type Arrival118 = {
     id: string;
     mezzo: string;
     eta: string;
-    codice: 'Rosso' | 'Giallo' | 'Verde';
+    codice: 'Bianco' | 'Verde' | 'Giallo' | 'Arancio' | 'Rosso';
     destinazione: string;
     note: string;
 };
@@ -16,11 +16,15 @@ type Arrivals118CardProps = {
 };
 
 const codiceClass: Record<Arrival118['codice'], string> = {
-    Rosso: 'bg-red-500/10 text-red-700 border-red-200 dark:text-red-200 dark:border-red-900/60',
-    Giallo:
-        'bg-amber-500/10 text-amber-700 border-amber-200 dark:text-amber-200 dark:border-amber-900/60',
+    Bianco:
+        'bg-slate-200/60 text-slate-700 border-slate-200 dark:text-slate-100 dark:border-slate-700 dark:bg-slate-800/60',
     Verde:
         'bg-emerald-500/10 text-emerald-700 border-emerald-200 dark:text-emerald-200 dark:border-emerald-900/60',
+    Giallo:
+        'bg-amber-500/10 text-amber-700 border-amber-200 dark:text-amber-200 dark:border-amber-900/60',
+    Arancio:
+        'bg-orange-500/10 text-orange-700 border-orange-200 dark:text-orange-200 dark:border-orange-900/60',
+    Rosso: 'bg-red-500/10 text-red-700 border-red-200 dark:text-red-200 dark:border-red-900/60',
 };
 
 export function Arrivals118Card({ items }: Arrivals118CardProps) {

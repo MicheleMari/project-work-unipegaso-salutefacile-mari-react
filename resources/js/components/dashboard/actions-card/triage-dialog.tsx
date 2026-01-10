@@ -60,7 +60,7 @@ const priorityCodes: { value: PriorityCode; label: string; description: string; 
     },
     {
         value: 'arancio',
-        label: 'Arancione',
+        label: 'Arancio',
         description: 'Condizione grave, intervento urgente',
         colorClass: 'bg-orange-500 text-orange-50',
         selectedClass:
