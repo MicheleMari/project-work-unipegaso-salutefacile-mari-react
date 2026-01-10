@@ -1,21 +1,27 @@
 import { Badge } from '@/components/ui/badge';
 import { type ReactNode } from 'react';
 
-type Code = 'Rosso' | 'Giallo' | 'Verde';
+type Code = 'Rosso' | 'Arancio' | 'Giallo' | 'Verde' | 'Bianco';
 
 const codiceFilterClasses: Record<Code, string> = {
     Rosso:
         'border-red-200 bg-red-500/10 text-red-700 dark:border-red-900/60 dark:text-red-200 hover:bg-red-500/15',
+    Arancio:
+        'border-orange-200 bg-orange-500/10 text-orange-700 dark:border-orange-900/60 dark:text-orange-200 hover:bg-orange-500/15',
     Giallo:
         'border-amber-200 bg-amber-500/10 text-amber-700 dark:border-amber-900/60 dark:text-amber-200 hover:bg-amber-500/15',
     Verde:
         'border-emerald-200 bg-emerald-500/10 text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-200 hover:bg-emerald-500/15',
+    Bianco:
+        'border-white bg-white/15 text-white dark:border-white/65 dark:text-white hover:bg-white/25',
 };
 
 const codiceActiveRing: Record<Code, string> = {
     Rosso: 'ring-red-400/70',
+    Arancio: 'ring-orange-400/70',
     Giallo: 'ring-amber-400/70',
     Verde: 'ring-emerald-400/70',
+    Bianco: 'ring-white/70',
 };
 
 const statusFilterClasses: Record<string, string> = {
@@ -34,9 +40,9 @@ const statusFilterClasses: Record<string, string> = {
         'border-blue-200 bg-blue-500/15 text-blue-800 dark:border-blue-800 dark:text-blue-100',
     'Referto inviato':
         'border-emerald-200 bg-emerald-500/15 text-emerald-800 dark:border-emerald-800 dark:text-emerald-100',
-    Chiusura:
+    'chiusura':
         'border-emerald-200 bg-emerald-500/15 text-emerald-800 dark:border-emerald-800 dark:text-emerald-100',
-    'O.M.I.':
+    'O.B.I.':
         'border-purple-200 bg-purple-500/15 text-purple-800 dark:border-purple-800 dark:text-purple-100',
 };
 
@@ -49,8 +55,8 @@ const statusActiveRing: Record<string, string> = {
     'Accertamenti preliminari in corso': 'ring-emerald-400/70',
     'Specialista chiamato': 'ring-blue-400/70',
     'Referto inviato': 'ring-emerald-400/70',
-    Chiusura: 'ring-emerald-400/70',
-    'O.M.I.': 'ring-purple-400/70',
+    'chiusura': 'ring-emerald-400/70',
+    'O.B.I.': 'ring-purple-400/70',
 };
 
 const waitFilterOptions = [
@@ -74,22 +80,24 @@ const waitFilterOptions = [
     },
 ];
 
-const waitActiveRing: Record<'all' | 'green' | 'yellow' | 'red', string> = {
+const waitActiveRing: Record<'all' | 'white' | 'green' | 'yellow' | 'orange' | 'red', string> = {
     all: '',
+    white: 'ring-white/70',
     green: 'ring-emerald-400/70',
     yellow: 'ring-amber-400/70',
+    orange: 'ring-orange-400/70',
     red: 'ring-red-400/70',
 };
 
 type EmergenciesFilterProps = {
     codeFilter: 'all' | Code;
     statusFilter: 'all' | string;
-    waitFilter: 'all' | 'green' | 'yellow' | 'red';
+    waitFilter: 'all' | 'white' | 'green' | 'yellow' | 'orange' | 'red';
     codiceOptions: Code[];
     statusOptions: string[];
     onCodeChange: (value: 'all' | Code) => void;
     onStatusChange: (value: 'all' | string) => void;
-    onWaitChange: (value: 'all' | 'green' | 'yellow' | 'red') => void;
+    onWaitChange: (value: 'all' | 'white' | 'green' | 'yellow' | 'orange' | 'red') => void;
 };
 
 export function EmergenciesFilter({
