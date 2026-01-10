@@ -8,7 +8,7 @@ use OpenApi\Attributes as OA;
 #[OA\Info(
     title: 'SaluteFacile API',
     version: '1.0.0',
-    description: 'API REST per la gestione di emergenze, visite specialistiche, esami e referti.'
+    description: 'API REST per la gestione di un pronto soccorso per la gestione di emergenze, visite specialistiche, esami e referti.',
 )]
 #[OA\Server(
     url: 'http://localhost:8000',
