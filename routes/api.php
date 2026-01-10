@@ -13,6 +13,10 @@ use App\Http\Controllers\TriageSuggestController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('health', function () {
+    return response()->json(['status' => 'ok']);
+});
+
 Route::middleware(['web', 'auth'])->group(function () {
     Route::apiResource('patients', PatientController::class);
     Route::apiResource('departments', DepartmentController::class);

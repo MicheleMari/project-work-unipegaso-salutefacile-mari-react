@@ -1,0 +1,4728 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "SaluteFacile API",
+        "description": "API REST per la gestione di emergenze, visite specialistiche, esami e referti.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000",
+            "description": "Local server"
+        }
+    ],
+    "paths": {
+        "/api/attachments": {
+            "get": {
+                "tags": [
+                    "Attachments"
+                ],
+                "summary": "Elenco allegati",
+                "operationId": "a608f1b756a44adbc654d06b4ad8ca07",
+                "responses": {
+                    "200": {
+                        "description": "Lista allegati",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Attachment"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Attachments"
+                ],
+                "summary": "Crea allegato",
+                "operationId": "d6e11ad66d24d9626db36920bee75dc5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AttachmentCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Attachment"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/attachments/{attachment}": {
+            "get": {
+                "tags": [
+                    "Attachments"
+                ],
+                "summary": "Dettaglio allegato",
+                "operationId": "1461a16fa7c4ee44284adcafe47603eb",
+                "parameters": [
+                    {
+                        "name": "attachment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dettaglio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Attachment"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Attachments"
+                ],
+                "summary": "Aggiorna allegato",
+                "operationId": "6940f1474a4b4c556688e31a7ee745ea",
+                "parameters": [
+                    {
+                        "name": "attachment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AttachmentUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aggiornato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Attachment"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Attachments"
+                ],
+                "summary": "Elimina allegato",
+                "operationId": "93a5705b4d14ff9e9f2d2371519f8069",
+                "parameters": [
+                    {
+                        "name": "attachment",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Eliminato"
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Login",
+                "description": "Autentica l utente e crea la sessione.",
+                "operationId": "c477ed4e628d18ed3c6a78d25d72bace",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Login effettuato"
+                    },
+                    "401": {
+                        "description": "Credenziali non valide",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": []
+            }
+        },
+        "/api/departments": {
+            "get": {
+                "tags": [
+                    "Departments"
+                ],
+                "summary": "Elenco reparti",
+                "operationId": "d3f57cb257dec1b31fd4a668f6bb46c8",
+                "responses": {
+                    "200": {
+                        "description": "Lista reparti",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Department"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Departments"
+                ],
+                "summary": "Crea reparto",
+                "operationId": "e828ba637540cc98b565e3657cb4ef00",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DepartmentCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Department"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/departments/{department}": {
+            "get": {
+                "tags": [
+                    "Departments"
+                ],
+                "summary": "Dettaglio reparto",
+                "operationId": "95659f641b4aac96e002774906d46014",
+                "parameters": [
+                    {
+                        "name": "department",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dettaglio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Department"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Departments"
+                ],
+                "summary": "Aggiorna reparto",
+                "operationId": "3fb5be88d7347dc8fa62fa8b764fc184",
+                "parameters": [
+                    {
+                        "name": "department",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DepartmentUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aggiornato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Department"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Departments"
+                ],
+                "summary": "Elimina reparto",
+                "operationId": "91c3aa83833d4241f0259999d41c097c",
+                "parameters": [
+                    {
+                        "name": "department",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Eliminato"
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/emergencies": {
+            "get": {
+                "tags": [
+                    "Emergencies"
+                ],
+                "summary": "Elenco emergenze",
+                "description": "Restituisce le emergenze; per ruolo Operatore 118 e Specialista applica filtri automatici.",
+                "operationId": "c2e910657dc05506613c74506ef8e812",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Numero massimo di record (1-200).",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 200,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista emergenze",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Emergency"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Emergencies"
+                ],
+                "summary": "Crea emergenza",
+                "operationId": "45fe40254656c60fb54e02a16bcf76bf",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmergencyCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Emergency"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/emergencies/{emergency}": {
+            "get": {
+                "tags": [
+                    "Emergencies"
+                ],
+                "summary": "Dettaglio emergenza",
+                "operationId": "87dd19c4fca37b02e509ec10242ac44a",
+                "parameters": [
+                    {
+                        "name": "emergency",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dettaglio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Emergency"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Emergencies"
+                ],
+                "summary": "Aggiorna emergenza",
+                "operationId": "92b863a0451e2169b3a0a0b107f88eab",
+                "parameters": [
+                    {
+                        "name": "emergency",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmergencyUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aggiornato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Emergency"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Emergencies"
+                ],
+                "summary": "Elimina emergenza",
+                "operationId": "cd40e53104ff7f912be4d13f7f4a6a1a",
+                "parameters": [
+                    {
+                        "name": "emergency",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Eliminato"
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/emergencies/{emergency}/call-specialist": {
+            "post": {
+                "tags": [
+                    "Emergencies"
+                ],
+                "summary": "Chiama specialista",
+                "operationId": "e486c064bc77ecaafee21046dace9e64",
+                "parameters": [
+                    {
+                        "name": "emergency",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmergencyCallSpecialistRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Specialista associato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Emergency"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/emergencies/{emergency}/remind-specialist": {
+            "post": {
+                "tags": [
+                    "Emergencies"
+                ],
+                "summary": "Invia promemoria specialista",
+                "operationId": "0a488fc736951a1cea8b38d1b3cc0650",
+                "parameters": [
+                    {
+                        "name": "emergency",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmergencyRemindSpecialistRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Promemoria inviato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "reminded"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Nessuno specialista associato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/emergencies/{emergency}/specialist-report": {
+            "post": {
+                "tags": [
+                    "Emergencies"
+                ],
+                "summary": "Report specialistico",
+                "operationId": "6613b075c4f88c1345ee0b45d5742c19",
+                "parameters": [
+                    {
+                        "name": "emergency",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmergencySpecialistReportRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Report salvato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "emergency": {
+                                            "$ref": "#/components/schemas/Emergency"
+                                        },
+                                        "visit": {
+                                            "$ref": "#/components/schemas/SpecialistVisit"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorizzato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/health": {
+            "get": {
+                "tags": [
+                    "Health"
+                ],
+                "summary": "Health check",
+                "operationId": "722323116a5f7277861502aa013c0cf4",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HealthResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investigations": {
+            "get": {
+                "tags": [
+                    "Investigations"
+                ],
+                "summary": "Elenco esami",
+                "operationId": "f8fa91fbaae81267be6141a7b2beeae6",
+                "responses": {
+                    "200": {
+                        "description": "Lista esami",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Investigation"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Investigations"
+                ],
+                "summary": "Crea esame",
+                "operationId": "e89e50e9586e96e6905964c5fa011f99",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvestigationCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Investigation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investigations/{investigation}": {
+            "get": {
+                "tags": [
+                    "Investigations"
+                ],
+                "summary": "Dettaglio esame",
+                "operationId": "d28668ba6f1183c86798c96649d012f5",
+                "parameters": [
+                    {
+                        "name": "investigation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dettaglio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Investigation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Investigations"
+                ],
+                "summary": "Aggiorna esame",
+                "operationId": "c8847f232354f2bd24b972cbbba1fe7d",
+                "parameters": [
+                    {
+                        "name": "investigation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvestigationUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aggiornato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Investigation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Investigations"
+                ],
+                "summary": "Elimina esame",
+                "operationId": "c7d049b62b9ee589fd88d1f71e0505ce",
+                "parameters": [
+                    {
+                        "name": "investigation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Eliminato"
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investigations-performed": {
+            "get": {
+                "tags": [
+                    "InvestigationsPerformed"
+                ],
+                "summary": "Elenco accertamenti eseguiti",
+                "operationId": "52fd1dd473df628ab0f3edb5ea3d3433",
+                "responses": {
+                    "200": {
+                        "description": "Lista accertamenti",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/InvestigationPerformed"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "InvestigationsPerformed"
+                ],
+                "summary": "Crea accertamento",
+                "operationId": "82c7c04af9a39ece0e0b1fef46a8ddbc",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvestigationPerformedCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvestigationPerformed"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investigations-performed/{investigations_performed}": {
+            "get": {
+                "tags": [
+                    "InvestigationsPerformed"
+                ],
+                "summary": "Dettaglio accertamento",
+                "operationId": "f964689513c617f0022de535ebf4c087",
+                "parameters": [
+                    {
+                        "name": "investigations_performed",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dettaglio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvestigationPerformed"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "InvestigationsPerformed"
+                ],
+                "summary": "Aggiorna accertamento",
+                "operationId": "87aaeab40bd1bd9a43e6110fd5364b49",
+                "parameters": [
+                    {
+                        "name": "investigations_performed",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InvestigationPerformedUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aggiornato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InvestigationPerformed"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "InvestigationsPerformed"
+                ],
+                "summary": "Elimina accertamento",
+                "operationId": "b707e92ec2147f7721dd66c8894e9188",
+                "parameters": [
+                    {
+                        "name": "investigations_performed",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Eliminato"
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/patients": {
+            "get": {
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Elenco pazienti",
+                "operationId": "54208a8a955fce1a37c93a7fabbf366d",
+                "responses": {
+                    "200": {
+                        "description": "Lista pazienti",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Patient"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Crea paziente",
+                "description": "Se esiste un paziente con lo stesso fiscal_code, restituisce quello esistente.",
+                "operationId": "0034ebe5f5dfa79a211d126e2bde4495",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatientCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Patient"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Gia esistente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Patient"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/patients/{patient}": {
+            "get": {
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Dettaglio paziente",
+                "operationId": "572c3b1b6d1e73cc3fc749c55ec26d8e",
+                "parameters": [
+                    {
+                        "name": "patient",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dettaglio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Patient"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Aggiorna paziente",
+                "operationId": "bebb600babb6f7016f44032ef7b8ab31",
+                "parameters": [
+                    {
+                        "name": "patient",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatientUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aggiornato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Patient"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Patients"
+                ],
+                "summary": "Elimina paziente",
+                "operationId": "061bde98af6ea66e2a4fe4f05fde3362",
+                "parameters": [
+                    {
+                        "name": "patient",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Eliminato"
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/specialist-investigations": {
+            "get": {
+                "tags": [
+                    "SpecialistInvestigations"
+                ],
+                "summary": "Elenco indagini specialistiche",
+                "operationId": "f17e88b20ba483eb13a86f379bf2204a",
+                "responses": {
+                    "200": {
+                        "description": "Lista indagini",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SpecialistInvestigation"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "SpecialistInvestigations"
+                ],
+                "summary": "Crea indagine specialistica",
+                "operationId": "405fff70a41c55ea9e510c4f49cd46fb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SpecialistInvestigationCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpecialistInvestigation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/specialist-investigations/{specialist_investigation}": {
+            "get": {
+                "tags": [
+                    "SpecialistInvestigations"
+                ],
+                "summary": "Dettaglio indagine specialistica",
+                "operationId": "be210d4c4553a6a5212a23e9f7e64680",
+                "parameters": [
+                    {
+                        "name": "specialist_investigation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dettaglio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpecialistInvestigation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "SpecialistInvestigations"
+                ],
+                "summary": "Aggiorna indagine specialistica",
+                "operationId": "2b348392c153709259fde01951e11ede",
+                "parameters": [
+                    {
+                        "name": "specialist_investigation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SpecialistInvestigationUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aggiornato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpecialistInvestigation"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "SpecialistInvestigations"
+                ],
+                "summary": "Elimina indagine specialistica",
+                "operationId": "fc3903637ef0396d6cd33979fbb6289a",
+                "parameters": [
+                    {
+                        "name": "specialist_investigation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Eliminato"
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/specialist-investigation-requests": {
+            "get": {
+                "tags": [
+                    "SpecialistInvestigationRequests"
+                ],
+                "summary": "Elenco richieste indagini specialistiche",
+                "operationId": "b084282940a8cfafa3cd67a49c1d8580",
+                "responses": {
+                    "200": {
+                        "description": "Lista richieste",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SpecialistInvestigationRequest"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "SpecialistInvestigationRequests"
+                ],
+                "summary": "Crea richiesta indagine specialistica",
+                "operationId": "a7717473f453caf6728f497e980d08ec",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SpecialistInvestigationRequestCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpecialistInvestigationRequest"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/specialist-investigation-requests/{specialist_investigation_request}": {
+            "get": {
+                "tags": [
+                    "SpecialistInvestigationRequests"
+                ],
+                "summary": "Dettaglio richiesta indagine specialistica",
+                "operationId": "780bb473c00249cd4271526bfffbb5f1",
+                "parameters": [
+                    {
+                        "name": "specialist_investigation_request",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dettaglio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpecialistInvestigationRequest"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "SpecialistInvestigationRequests"
+                ],
+                "summary": "Aggiorna richiesta indagine specialistica",
+                "operationId": "883923b6acf720e1c918cef0bd10c184",
+                "parameters": [
+                    {
+                        "name": "specialist_investigation_request",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SpecialistInvestigationRequestUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aggiornato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpecialistInvestigationRequest"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "SpecialistInvestigationRequests"
+                ],
+                "summary": "Elimina richiesta indagine specialistica",
+                "operationId": "05a76a9535e80907d5f60fcebc8a6bef",
+                "parameters": [
+                    {
+                        "name": "specialist_investigation_request",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Eliminato"
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/specialist-visits": {
+            "get": {
+                "tags": [
+                    "SpecialistVisits"
+                ],
+                "summary": "Elenco visite specialistiche",
+                "operationId": "37c70239a6f8f44786d8e6a6703cf281",
+                "responses": {
+                    "200": {
+                        "description": "Lista visite",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SpecialistVisit"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "SpecialistVisits"
+                ],
+                "summary": "Crea visita specialistica",
+                "operationId": "9059ec477ce749d157d7eb92393c1178",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SpecialistVisitCreate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Creato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpecialistVisit"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/specialist-visits/{specialist_visit}": {
+            "get": {
+                "tags": [
+                    "SpecialistVisits"
+                ],
+                "summary": "Dettaglio visita specialistica",
+                "operationId": "0c7da4aa15dc472b66894523d53fc71c",
+                "parameters": [
+                    {
+                        "name": "specialist_visit",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dettaglio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpecialistVisit"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorizzato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "SpecialistVisits"
+                ],
+                "summary": "Aggiorna visita specialistica",
+                "operationId": "1c0e543c2a67c3588b0910c918c155c5",
+                "parameters": [
+                    {
+                        "name": "specialist_visit",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SpecialistVisitUpdate"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Aggiornato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SpecialistVisit"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Non autorizzato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "SpecialistVisits"
+                ],
+                "summary": "Elimina visita specialistica",
+                "operationId": "64c29a205ec751790806e27b5d128856",
+                "parameters": [
+                    {
+                        "name": "specialist_visit",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "format": "int64"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Eliminato"
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Non trovato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/triage-suggest": {
+            "post": {
+                "tags": [
+                    "Triage"
+                ],
+                "summary": "Suggerimento codice triage",
+                "operationId": "fd96035cf1b5505d243a4b15ec3f792b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TriageSuggestRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Suggerimento",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TriageSuggestResponse"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Errore di validazione",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Elenco utenti",
+                "operationId": "8763bb54a58942946240de0d0c861115",
+                "responses": {
+                    "200": {
+                        "description": "Lista utenti",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/UserSummary"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autenticato",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Attachment": {
+                "required": [
+                    "id",
+                    "storage_path",
+                    "original_name",
+                    "mime_type",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 15
+                    },
+                    "investigation_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "specialist_visit_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 7,
+                        "nullable": true
+                    },
+                    "storage_path": {
+                        "type": "string",
+                        "example": "attachments/report.pdf"
+                    },
+                    "original_name": {
+                        "type": "string",
+                        "example": "report.pdf"
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "example": "application/pdf"
+                    },
+                    "size_bytes": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 102400,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "investigation_performed": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/InvestigationPerformed"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "specialist_visit": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SpecialistVisit"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AttachmentCreate": {
+                "required": [
+                    "storage_path",
+                    "original_name",
+                    "mime_type"
+                ],
+                "properties": {
+                    "investigation_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "specialist_visit_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 7,
+                        "nullable": true
+                    },
+                    "storage_path": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "attachments/report.pdf"
+                    },
+                    "original_name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "report.pdf"
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "application/pdf"
+                    },
+                    "size_bytes": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 102400,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AttachmentUpdate": {
+                "required": [
+                    "storage_path",
+                    "original_name",
+                    "mime_type"
+                ],
+                "properties": {
+                    "investigation_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "specialist_visit_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 7,
+                        "nullable": true
+                    },
+                    "storage_path": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "attachments/report.pdf"
+                    },
+                    "original_name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "report.pdf"
+                    },
+                    "mime_type": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "application/pdf"
+                    },
+                    "size_bytes": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 102400,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Department": {
+                "required": [
+                    "id",
+                    "name",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Cardiologia"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "DepartmentCreate": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Cardiologia"
+                    }
+                },
+                "type": "object"
+            },
+            "DepartmentUpdate": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Cardiologia"
+                    }
+                },
+                "type": "object"
+            },
+            "Emergency": {
+                "required": [
+                    "id",
+                    "user_id",
+                    "patient_id",
+                    "status",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 100
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Dolore toracico",
+                        "nullable": true
+                    },
+                    "alert_code": {
+                        "type": "string",
+                        "enum": [
+                            "bianco",
+                            "verde",
+                            "giallo",
+                            "arancio",
+                            "rosso"
+                        ],
+                        "example": "giallo",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "patient_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "specialist_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 7,
+                        "nullable": true
+                    },
+                    "vital_signs": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/VitalSigns"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "triage"
+                    },
+                    "admission_department": {
+                        "type": "string",
+                        "example": "Cardiologia",
+                        "nullable": true
+                    },
+                    "result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/EmergencyResult"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "sended_to_ps": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "notify_ps": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "arrived_ps": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "arrived_ps_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z",
+                        "nullable": true
+                    },
+                    "closed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T12:00:00Z",
+                        "nullable": true
+                    },
+                    "specialist_called_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:15:00Z",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "user": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UserSummary"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "patient": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Patient"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "specialist": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UserSummary"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "EmergencyCallSpecialistRequest": {
+                "required": [
+                    "specialist_id"
+                ],
+                "properties": {
+                    "specialist_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 7
+                    },
+                    "message": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "Intervento urgente",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "EmergencyCreate": {
+                "required": [
+                    "user_id",
+                    "patient_id"
+                ],
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "example": "Dolore toracico",
+                        "nullable": true
+                    },
+                    "alert_code": {
+                        "type": "string",
+                        "enum": [
+                            "bianco",
+                            "verde",
+                            "giallo",
+                            "arancio",
+                            "rosso"
+                        ],
+                        "example": "giallo",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "patient_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "vital_signs": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/VitalSigns"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "triage",
+                        "nullable": true
+                    },
+                    "admission_department": {
+                        "type": "string",
+                        "example": "Cardiologia",
+                        "nullable": true
+                    },
+                    "result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/EmergencyResult"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "sended_to_ps": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "notify_ps": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "arrived_ps": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "arrived_ps_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "EmergencyRemindSpecialistRequest": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "Promemoria intervento",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "EmergencyResult": {
+                "properties": {
+                    "notes": {
+                        "type": "string",
+                        "example": "Stato stabile"
+                    },
+                    "disposition": {
+                        "type": "string",
+                        "example": "dimissione",
+                        "nullable": true
+                    },
+                    "needs_follow_up": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "reported_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "EmergencySpecialistReportRequest": {
+                "required": [
+                    "notes"
+                ],
+                "properties": {
+                    "notes": {
+                        "type": "string",
+                        "example": "Valutazione completata"
+                    },
+                    "disposition": {
+                        "type": "string",
+                        "maxLength": 60,
+                        "example": "dimissione",
+                        "nullable": true
+                    },
+                    "needs_follow_up": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "send_to_ps": {
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "EmergencyUpdate": {
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "example": "Dolore toracico",
+                        "nullable": true
+                    },
+                    "alert_code": {
+                        "type": "string",
+                        "enum": [
+                            "bianco",
+                            "verde",
+                            "giallo",
+                            "arancio",
+                            "rosso"
+                        ],
+                        "example": "giallo",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "patient_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "vital_signs": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/VitalSigns"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "triage",
+                        "nullable": true
+                    },
+                    "admission_department": {
+                        "type": "string",
+                        "example": "Cardiologia",
+                        "nullable": true
+                    },
+                    "result": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/EmergencyResult"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "sended_to_ps": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "notify_ps": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "arrived_ps": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "arrived_ps_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "required": [
+                    "message"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Errore"
+                    }
+                },
+                "type": "object"
+            },
+            "HealthResponse": {
+                "required": [
+                    "status"
+                ],
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "example": "ok"
+                    }
+                },
+                "type": "object"
+            },
+            "Investigation": {
+                "required": [
+                    "id",
+                    "title",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Emocromo"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Esame del sangue completo",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "InvestigationCreate": {
+                "required": [
+                    "title"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 150,
+                        "example": "Emocromo"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Esame del sangue completo",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "InvestigationPerformed": {
+                "required": [
+                    "id",
+                    "emergency_id",
+                    "investigation_id",
+                    "performed_by",
+                    "performed_at",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 3
+                    },
+                    "emergency_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 100
+                    },
+                    "investigation_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "performed_by": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "performed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "example": "Nessuna anomalia",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Note aggiuntive",
+                        "nullable": true
+                    },
+                    "attachment_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 15,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "emergency": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Emergency"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "investigation": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Investigation"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "performer": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UserSummary"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "attachment": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Attachment"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "InvestigationPerformedCreate": {
+                "required": [
+                    "emergency_id",
+                    "investigation_id",
+                    "performed_by"
+                ],
+                "properties": {
+                    "emergency_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 100
+                    },
+                    "investigation_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "performed_by": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "performed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z",
+                        "nullable": true
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "example": "Nessuna anomalia",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Note aggiuntive",
+                        "nullable": true
+                    },
+                    "attachment_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 15,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "InvestigationPerformedUpdate": {
+                "required": [
+                    "emergency_id",
+                    "investigation_id",
+                    "performed_by"
+                ],
+                "properties": {
+                    "emergency_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 100
+                    },
+                    "investigation_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "performed_by": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "performed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z",
+                        "nullable": true
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "example": "Nessuna anomalia",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Note aggiuntive",
+                        "nullable": true
+                    },
+                    "attachment_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 15,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "InvestigationUpdate": {
+                "required": [
+                    "title"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 150,
+                        "example": "Emocromo"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Esame del sangue completo",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "LoginRequest": {
+                "required": [
+                    "email",
+                    "password"
+                ],
+                "properties": {
+                    "email": {
+                        "description": "Email oppure user_identity_code.",
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "password": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "secret"
+                    },
+                    "remember": {
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Patient": {
+                "required": [
+                    "id",
+                    "name",
+                    "surname",
+                    "fiscal_code",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Mario"
+                    },
+                    "surname": {
+                        "type": "string",
+                        "example": "Rossi"
+                    },
+                    "fiscal_code": {
+                        "type": "string",
+                        "example": "RSSMRA80A01H501U"
+                    },
+                    "residence_address": {
+                        "type": "string",
+                        "example": "Via Roma 1",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+39 333 0000000",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "mario.rossi@example.com",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "PatientCreate": {
+                "required": [
+                    "name",
+                    "surname",
+                    "fiscal_code"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Mario"
+                    },
+                    "surname": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Rossi"
+                    },
+                    "fiscal_code": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "RSSMRA80A01H501U"
+                    },
+                    "residence_address": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Via Roma 1",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 30,
+                        "example": "+39 333 0000000",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "maxLength": 150,
+                        "example": "mario.rossi@example.com",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "PatientUpdate": {
+                "required": [
+                    "name",
+                    "surname",
+                    "fiscal_code"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Mario"
+                    },
+                    "surname": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Rossi"
+                    },
+                    "fiscal_code": {
+                        "type": "string",
+                        "maxLength": 50,
+                        "example": "RSSMRA80A01H501U"
+                    },
+                    "residence_address": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Via Roma 1",
+                        "nullable": true
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 30,
+                        "example": "+39 333 0000000",
+                        "nullable": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "maxLength": 150,
+                        "example": "mario.rossi@example.com",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "Permission": {
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Operatore 118"
+                    }
+                },
+                "type": "object"
+            },
+            "SpecialistInvestigation": {
+                "required": [
+                    "id",
+                    "title",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 30
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Ecocardiogramma"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Esame specialistico cardiologico",
+                        "nullable": true
+                    },
+                    "discipline": {
+                        "type": "string",
+                        "example": "Cardiologia",
+                        "nullable": true
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "department": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Department"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SpecialistInvestigationCreate": {
+                "required": [
+                    "title"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 150,
+                        "example": "Ecocardiogramma"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Esame specialistico cardiologico",
+                        "nullable": true
+                    },
+                    "discipline": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "example": "Cardiologia",
+                        "nullable": true
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SpecialistInvestigationRequest": {
+                "required": [
+                    "id",
+                    "emergency_id",
+                    "specialist_investigation_id",
+                    "requested_by",
+                    "status",
+                    "requested_at",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 40
+                    },
+                    "emergency_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 100
+                    },
+                    "specialist_investigation_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 30
+                    },
+                    "requested_by": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "specialist_visit_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 20,
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "requested"
+                    },
+                    "requested_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "scheduled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-02T10:00:00Z",
+                        "nullable": true
+                    },
+                    "report_expected_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-02T12:00:00Z",
+                        "nullable": true
+                    },
+                    "report_received_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-02T12:30:00Z",
+                        "nullable": true
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "example": "Esito positivo",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Note aggiuntive",
+                        "nullable": true
+                    },
+                    "follow_up_action": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "example": "Controllo tra 7 giorni",
+                        "nullable": true
+                    },
+                    "disposition": {
+                        "type": "string",
+                        "maxLength": 60,
+                        "example": "dimissione",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "emergency": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Emergency"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "specialist_investigation": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SpecialistInvestigation"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "requester": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UserSummary"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "specialist_visit": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SpecialistVisit"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SpecialistInvestigationRequestCreate": {
+                "required": [
+                    "emergency_id",
+                    "specialist_investigation_id",
+                    "requested_by",
+                    "status"
+                ],
+                "properties": {
+                    "emergency_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 100
+                    },
+                    "specialist_investigation_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 30
+                    },
+                    "requested_by": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "specialist_visit_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 20,
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "requested"
+                    },
+                    "requested_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z",
+                        "nullable": true
+                    },
+                    "scheduled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-02T10:00:00Z",
+                        "nullable": true
+                    },
+                    "report_expected_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-02T12:00:00Z",
+                        "nullable": true
+                    },
+                    "report_received_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-02T12:30:00Z",
+                        "nullable": true
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "example": "Esito positivo",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Note aggiuntive",
+                        "nullable": true
+                    },
+                    "follow_up_action": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "example": "Controllo tra 7 giorni",
+                        "nullable": true
+                    },
+                    "disposition": {
+                        "type": "string",
+                        "maxLength": 60,
+                        "example": "dimissione",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SpecialistInvestigationRequestUpdate": {
+                "required": [
+                    "emergency_id",
+                    "specialist_investigation_id",
+                    "requested_by",
+                    "status"
+                ],
+                "properties": {
+                    "emergency_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 100
+                    },
+                    "specialist_investigation_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 30
+                    },
+                    "requested_by": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "specialist_visit_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 20,
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "requested"
+                    },
+                    "requested_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z",
+                        "nullable": true
+                    },
+                    "scheduled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-02T10:00:00Z",
+                        "nullable": true
+                    },
+                    "report_expected_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-02T12:00:00Z",
+                        "nullable": true
+                    },
+                    "report_received_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-02T12:30:00Z",
+                        "nullable": true
+                    },
+                    "outcome": {
+                        "type": "string",
+                        "example": "Esito positivo",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Note aggiuntive",
+                        "nullable": true
+                    },
+                    "follow_up_action": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "example": "Controllo tra 7 giorni",
+                        "nullable": true
+                    },
+                    "disposition": {
+                        "type": "string",
+                        "maxLength": 60,
+                        "example": "dimissione",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SpecialistInvestigationUpdate": {
+                "required": [
+                    "title"
+                ],
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "maxLength": 150,
+                        "example": "Ecocardiogramma"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Esame specialistico cardiologico",
+                        "nullable": true
+                    },
+                    "discipline": {
+                        "type": "string",
+                        "maxLength": 120,
+                        "example": "Cardiologia",
+                        "nullable": true
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SpecialistVisit": {
+                "required": [
+                    "id",
+                    "patient_id",
+                    "department_id",
+                    "user_id",
+                    "emergency_id",
+                    "created_at",
+                    "updated_at"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 20
+                    },
+                    "patient_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "emergency_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 100
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "scheduled",
+                        "nullable": true
+                    },
+                    "scheduled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z",
+                        "nullable": true
+                    },
+                    "report_expected_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T12:00:00Z",
+                        "nullable": true
+                    },
+                    "report_received_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T12:30:00Z",
+                        "nullable": true
+                    },
+                    "needs_follow_up": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "disposition": {
+                        "type": "string",
+                        "example": "dimissione",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Note cliniche",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z"
+                    },
+                    "patient": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Patient"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "department": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Department"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "user": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/UserSummary"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "emergency": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Emergency"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SpecialistVisitCreate": {
+                "required": [
+                    "patient_id",
+                    "department_id",
+                    "user_id",
+                    "emergency_id"
+                ],
+                "properties": {
+                    "patient_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "emergency_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 100
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "scheduled",
+                        "nullable": true
+                    },
+                    "scheduled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z",
+                        "nullable": true
+                    },
+                    "report_expected_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T12:00:00Z",
+                        "nullable": true
+                    },
+                    "report_received_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T12:30:00Z",
+                        "nullable": true
+                    },
+                    "needs_follow_up": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "disposition": {
+                        "type": "string",
+                        "maxLength": 60,
+                        "example": "dimissione",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Note cliniche",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SpecialistVisitUpdate": {
+                "required": [
+                    "patient_id",
+                    "department_id",
+                    "user_id",
+                    "emergency_id"
+                ],
+                "properties": {
+                    "patient_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 10
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "emergency_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 100
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "scheduled",
+                        "nullable": true
+                    },
+                    "scheduled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T10:00:00Z",
+                        "nullable": true
+                    },
+                    "report_expected_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T12:00:00Z",
+                        "nullable": true
+                    },
+                    "report_received_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-01-01T12:30:00Z",
+                        "nullable": true
+                    },
+                    "needs_follow_up": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "disposition": {
+                        "type": "string",
+                        "maxLength": 60,
+                        "example": "dimissione",
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Note cliniche",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "TriageSuggestHistory": {
+                "required": [
+                    "code",
+                    "reason",
+                    "matches"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "example": "arancio",
+                        "nullable": true
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Casi simili recenti suggeriscono arancio",
+                        "nullable": true
+                    },
+                    "matches": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 5
+                    }
+                },
+                "type": "object"
+            },
+            "TriageSuggestRequest": {
+                "required": [
+                    "motivo_accesso"
+                ],
+                "properties": {
+                    "motivo_accesso": {
+                        "type": "string",
+                        "minLength": 3,
+                        "example": "Dolore toracico"
+                    },
+                    "codice_fiscale": {
+                        "type": "string",
+                        "example": "RSSMRA80A01H501U",
+                        "nullable": true
+                    },
+                    "vital_signs": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/VitalSigns"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "TriageSuggestResponse": {
+                "required": [
+                    "code",
+                    "rule_based",
+                    "history_based",
+                    "reason"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "example": "giallo",
+                        "nullable": true
+                    },
+                    "rule_based": {
+                        "$ref": "#/components/schemas/TriageSuggestRule"
+                    },
+                    "history_based": {
+                        "$ref": "#/components/schemas/TriageSuggestHistory"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Motivo di accesso con potenziale rischio"
+                    }
+                },
+                "type": "object"
+            },
+            "TriageSuggestRule": {
+                "required": [
+                    "code",
+                    "reason"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "example": "giallo",
+                        "nullable": true
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Motivo di accesso con potenziale rischio",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UserSummary": {
+                "required": [
+                    "id",
+                    "name",
+                    "surname"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 5
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Lucia"
+                    },
+                    "surname": {
+                        "type": "string",
+                        "example": "Bianchi"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "lucia.bianchi@example.com",
+                        "nullable": true
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "is_available": {
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "example": "https://example.com/storage/avatars/1.png",
+                        "nullable": true
+                    },
+                    "avatar_path": {
+                        "type": "string",
+                        "example": "avatars/1.png",
+                        "nullable": true
+                    },
+                    "permission_id": {
+                        "type": "integer",
+                        "format": "int64",
+                        "example": 3,
+                        "nullable": true
+                    },
+                    "permission": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Permission"
+                            }
+                        ],
+                        "nullable": true
+                    },
+                    "department": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/Department"
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ValidationErrorResponse": {
+                "required": [
+                    "message",
+                    "errors"
+                ],
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "The given data was invalid."
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": {
+                            "field": [
+                                "Validation message"
+                            ]
+                        },
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "VitalSigns": {
+                "properties": {
+                    "blood_pressure": {
+                        "type": "string",
+                        "example": "120/80",
+                        "nullable": true
+                    },
+                    "body_temperature": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 36.8,
+                        "nullable": true
+                    },
+                    "heart_rate": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 75,
+                        "nullable": true
+                    },
+                    "oxygen_saturation": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 98,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "sessionAuth": {
+                "type": "apiKey",
+                "description": "Autenticazione via sessione Laravel. Effettua il login su /login e usa il cookie di sessione.",
+                "name": "laravel_session",
+                "in": "cookie"
+            }
+        }
+    },
+    "security": [
+        {
+            "sessionAuth": []
+        }
+    ],
+    "tags": [
+        {
+            "name": "Attachments",
+            "description": "Attachments"
+        },
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "Departments",
+            "description": "Departments"
+        },
+        {
+            "name": "Emergencies",
+            "description": "Emergencies"
+        },
+        {
+            "name": "Health",
+            "description": "Health"
+        },
+        {
+            "name": "Investigations",
+            "description": "Investigations"
+        },
+        {
+            "name": "InvestigationsPerformed",
+            "description": "InvestigationsPerformed"
+        },
+        {
+            "name": "Patients",
+            "description": "Patients"
+        },
+        {
+            "name": "SpecialistInvestigations",
+            "description": "SpecialistInvestigations"
+        },
+        {
+            "name": "SpecialistInvestigationRequests",
+            "description": "SpecialistInvestigationRequests"
+        },
+        {
+            "name": "SpecialistVisits",
+            "description": "SpecialistVisits"
+        },
+        {
+            "name": "Triage",
+            "description": "Triage"
+        },
+        {
+            "name": "Users",
+            "description": "Users"
+        }
+    ]
+}

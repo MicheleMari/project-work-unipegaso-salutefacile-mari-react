@@ -1,0 +1,136 @@
+@startuml
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+class Attachment {
+  + investigation_id
+  + specialist_visit_id
+  + storage_path
+  + original_name
+  + mime_type
+  + size_bytes
+}
+class Department {
+  + name
+}
+class Emergency {
+  + description
+  + alert_code
+  + user_id
+  + patient_id
+  + vital_signs
+  + status
+  + admission_department
+  + result
+  + sended_to_ps
+  + notify_ps
+  + arrived_ps
+  + arrived_ps_at
+  + closed_at
+  + specialist_id
+  + specialist_called_at
+}
+class Investigation {
+  + title
+  + description
+}
+class InvestigationPerformed {
+  + emergency_id
+  + investigation_id
+  + performed_by
+  + performed_at
+  + outcome
+  + notes
+  + attachment_id
+}
+class Patient {
+  + name
+  + surname
+  + fiscal_code
+  + residence_address
+  + phone
+  + email
+}
+class Permission {
+  + name
+}
+class SpecialistInvestigation {
+  + title
+  + description
+  + discipline
+  + department_id
+}
+class SpecialistInvestigationRequest {
+  + emergency_id
+  + specialist_investigation_id
+  + requested_by
+  + specialist_visit_id
+  + status
+  + requested_at
+  + scheduled_at
+  + report_expected_at
+  + report_received_at
+  + outcome
+  + notes
+  + follow_up_action
+  + disposition
+}
+class SpecialistVisit {
+  + patient_id
+  + department_id
+  + user_id
+  + emergency_id
+  + status
+  + scheduled_at
+  + report_expected_at
+  + report_received_at
+  + needs_follow_up
+  + disposition
+  + notes
+}
+class User {
+  + name
+  + surname
+  + permission_id
+  + department_id
+  + is_available
+  + user_identity_code
+  + email
+  + password_hash
+  + avatar_path
+}
+Attachment --> InvestigationPerformed : belongsTo
+Attachment --> SpecialistVisit : belongsTo
+Department --> User : hasMany
+Department --> SpecialistVisit : hasMany
+Emergency --> User : belongsTo
+Emergency --> Patient : belongsTo
+Emergency --> InvestigationPerformed : hasMany
+Emergency --> SpecialistInvestigationRequest : hasMany
+Emergency --> SpecialistVisit : hasMany
+Investigation --> InvestigationPerformed : hasMany
+InvestigationPerformed --> Emergency : belongsTo
+InvestigationPerformed --> Investigation : belongsTo
+InvestigationPerformed --> User : belongsTo
+InvestigationPerformed --> Attachment : belongsTo
+Patient --> Emergency : hasMany
+Patient --> SpecialistVisit : hasMany
+Permission --> User : hasMany
+SpecialistInvestigation --> Department : belongsTo
+SpecialistInvestigation --> SpecialistInvestigationRequest : hasMany
+SpecialistInvestigationRequest --> Emergency : belongsTo
+SpecialistInvestigationRequest --> SpecialistInvestigation : belongsTo
+SpecialistInvestigationRequest --> User : belongsTo
+SpecialistInvestigationRequest --> SpecialistVisit : belongsTo
+SpecialistVisit --> Patient : belongsTo
+SpecialistVisit --> Department : belongsTo
+SpecialistVisit --> User : belongsTo
+SpecialistVisit --> Emergency : belongsTo
+SpecialistVisit --> Attachment : hasMany
+SpecialistVisit --> SpecialistInvestigationRequest : hasMany
+User --> Permission : belongsTo
+User --> Department : belongsTo
+User --> Emergency : hasMany
+User --> InvestigationPerformed : hasMany
+User --> SpecialistInvestigationRequest : hasMany
+User --> SpecialistVisit : hasMany
+@enduml

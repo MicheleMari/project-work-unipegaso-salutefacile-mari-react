@@ -1,0 +1,216 @@
+@startuml
+hide circle
+skinparam linetype ortho
+entity "attachments" as attachments {
+  created_at : timestamp
+  * id : id
+  investigation_id : foreignId
+  mime_type : string
+  original_name : string
+  size_bytes : unsignedInteger
+  specialist_visit_id : foreignId
+  storage_path : string
+  updated_at : timestamp
+}
+entity "cache" as cache {
+  expiration : integer
+  key : string
+  value : mediumText
+}
+entity "cache_locks" as cache_locks {
+  expiration : integer
+  key : string
+  owner : string
+}
+entity "departments" as departments {
+  created_at : timestamp
+  * id : id
+  name : string
+  updated_at : timestamp
+}
+entity "emergencies" as emergencies {
+  admission_department : dropColumn
+  alert_code : index
+  arrived_ps : boolean
+  arrived_ps_at : timestamp
+  closed_at : dropColumn
+  created_at : index
+  description : text
+  * id : id
+  idx_emergencies_alert_code : dropIndex
+  idx_emergencies_arrived_ps : dropIndex
+  idx_emergencies_arrived_ps_at : dropIndex
+  idx_emergencies_closed_at : dropIndex
+  idx_emergencies_created_at : dropIndex
+  idx_emergencies_notify_ps : dropIndex
+  idx_emergencies_specialist : dropIndex
+  notify_ps : dropColumn
+  patient_id : foreignId
+  result : json
+  sended_to_ps : boolean
+  specialist_called_at : timestamp
+  specialist_id : foreignId
+  status : string
+  updated_at : timestamp
+  user_id : foreignId
+  vital_signs : json
+}
+entity "failed_jobs" as failed_jobs {
+  connection : text
+  exception : longText
+  failed_at : timestamp
+  * id : id
+  payload : longText
+  queue : text
+  uuid : string
+}
+entity "investigations" as investigations {
+  created_at : timestamp
+  description : text
+  * id : id
+  title : string
+  updated_at : timestamp
+}
+entity "investigations_performed" as investigations_performed {
+  attachment_id : foreign
+  created_at : timestamp
+  emergency_id : foreignId
+  fk_ip_attachment : dropForeign
+  * id : id
+  investigation_id : foreignId
+  notes : text
+  outcome : text
+  performed_at : timestamp
+  performed_by : foreignId
+  updated_at : timestamp
+}
+entity "job_batches" as job_batches {
+  cancelled_at : integer
+  created_at : integer
+  failed_job_ids : longText
+  failed_jobs : integer
+  finished_at : integer
+  * id : string
+  name : string
+  options : mediumText
+  pending_jobs : integer
+  total_jobs : integer
+}
+entity "jobs" as jobs {
+  attempts : unsignedTinyInteger
+  available_at : unsignedInteger
+  created_at : unsignedInteger
+  * id : id
+  payload : longText
+  queue : string
+  reserved_at : unsignedInteger
+}
+entity "notifications" as notifications {
+  created_at : timestamp
+  data : text
+  * id : uuid
+  notifiable : morphs
+  read_at : timestamp
+  type : string
+  updated_at : timestamp
+}
+entity "patients" as patients {
+  created_at : timestamp
+  email : string
+  fiscal_code : string
+  * id : id
+  name : string
+  phone : string
+  residence_address : string
+  surname : string
+  updated_at : timestamp
+}
+entity "permissions" as permissions {
+  created_at : timestamp
+  * id : id
+  name : string
+  updated_at : timestamp
+}
+entity "sessions" as sessions {
+  * id : string
+  ip_address : string
+  last_activity : integer
+  payload : longText
+  user_agent : text
+  user_id : foreignId
+}
+entity "specialist_investigation_requests" as specialist_investigation_requests {
+  created_at : timestamp
+  disposition : string
+  emergency_id : foreignId
+  follow_up_action : string
+  * id : id
+  notes : text
+  outcome : text
+  report_expected_at : timestamp
+  report_received_at : timestamp
+  requested_at : timestamp
+  requested_by : foreignId
+  scheduled_at : timestamp
+  specialist_investigation_id : foreignId
+  specialist_visit_id : foreignId
+  status : string
+  updated_at : timestamp
+}
+entity "specialist_investigations" as specialist_investigations {
+  created_at : timestamp
+  department_id : dropColumn
+  description : text
+  discipline : string
+  * id : id
+  idx_specialist_investigations_department : dropIndex
+  title : string
+  updated_at : timestamp
+}
+entity "specialist_visits" as specialist_visits {
+  created_at : timestamp
+  department_id : foreignId
+  disposition : string
+  emergency_id : foreignId
+  * id : id
+  needs_follow_up : boolean
+  notes : text
+  patient_id : foreignId
+  report_expected_at : timestamp
+  report_received_at : timestamp
+  scheduled_at : timestamp
+  status : string
+  updated_at : timestamp
+  user_id : foreignId
+}
+entity "users" as users {
+  avatar_path : dropColumn
+  created_at : timestamp
+  department_id : foreignId
+  email : string
+  * id : id
+  idx_users_is_available : dropIndex
+  is_available : dropColumn
+  name : string
+  password_hash : string
+  permission_id : foreignId
+  remember_token : dropColumn
+  surname : string
+  two_factor_confirmed_at : timestamp
+  two_factor_recovery_codes : text
+  two_factor_secret : text
+  updated_at : timestamp
+  user_identity_code : string
+}
+users }o--|| permissions : "permission_id"
+users }o--|| departments : "department_id"
+emergencies }o--|| users : "user_id"
+emergencies }o--|| patients : "patient_id"
+investigations_performed }o--|| emergencies : "emergency_id"
+investigations_performed }o--|| investigations : "investigation_id"
+investigations_performed }o--|| users : "performed_by"
+specialist_visits }o--|| patients : "patient_id"
+specialist_visits }o--|| departments : "department_id"
+specialist_visits }o--|| users : "user_id"
+specialist_visits }o--|| emergencies : "emergency_id"
+@enduml
