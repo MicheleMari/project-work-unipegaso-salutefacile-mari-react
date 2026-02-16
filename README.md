@@ -1,7 +1,7 @@
 # SaluteFacile
 
 ## Descrizione
-SaluteFacile e' una web app per la gestione di un pronto soccorso: triage ed emergenze, visite specialistiche, richieste di esami e produzione di referti. Il backend espone API REST documentate con Swagger, mentre il frontend e' una SPA React integrata via Inertia.
+SaluteFacile è una web app per la gestione di un pronto soccorso: triage ed emergenze, visite specialistiche, richieste di esami e produzione di referti. Il backend espone API REST documentate con Swagger, mentre il frontend è React integrato via Inertia.
 
 ## Tecnologie principali
 - Backend: Laravel 12 (PHP 8.2+), Fortify (auth), L5-Swagger (OpenAPI)
@@ -47,7 +47,7 @@ Il comando avvia server Laravel, queue listener e Vite.
 npm run build
 ```
 
-## Avvio manuale (se preferisci separare i processi)
+## Avvio manuale (per separare i processi)
 ```bash
 php artisan serve
 npm run dev
@@ -64,9 +64,3 @@ Esegue `DatabaseSeeder` con permessi, reparti, utenti demo e indagini. Utenti pr
 ## Configurazione utile
 - `APP_URL` in `.env` per l'URL base (default `http://127.0.0.1:8000`)
 - `DB_CONNECTION=sqlite` usa `database/database.sqlite`
-
-## Note sulla generazione Swagger
-Se modifichi annotazioni OpenAPI e non vedi aggiornamenti:
-```bash
-php artisan l5-swagger:generate
-```
